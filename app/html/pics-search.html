@@ -1,0 +1,42 @@
+<div class="panel panel-primary"  ng-if="pics.buckets.length > 0">
+  <div class="panel-heading">Search pictures</div>
+  <div class="panel-body">
+    <form accept-charset="UTF-8" ng-submit="searchCtrl.searchPics(pics)">
+      <div class="field">
+        <div class="input-group">
+          <span class="input-group-addon">Bucket Name</span>
+          <select class="form-control" id="search_bucket" name="search_bucket">
+            <option ng-repeat="bucket in pics.buckets" value="{{ bucket }}">{{ bucket }}</option>
+          </select>
+        </div>
+      </div>
+      <br />
+      <div class="field">
+        <div class="input-group">
+          <span class="input-group-addon">Minimum Image Width</span>
+          <input ng-model="searchCtrl.search_width" class="form-control" id="search_width" name="search_width" placeholder="px" type="text" />
+        </div>
+      </div>
+      <br />
+      <div class="field">
+        <div class="input-group">
+          <span class="input-group-addon">Minimum Image Height</span>
+          <input ng-model="searchCtrl.search_height" class="form-control" id="search_height" name="search_height" placeholder="px" type="text" />
+        </div>
+      </div>
+      <br />
+      <div class="field">
+        <div class="input-group">
+          <input type="text" class="form-control" value="Use selected area" readonly="readonly">
+          <span class="input-group-addon">
+            <input ng-model="searchCtrl.search_area" id="search_area" name="search_area" type="checkbox" />
+          </span>
+        </div>
+      </div>
+      <br />
+      <div class="actions">
+        <input class="btn btn-primary" type="submit" value="Search" ng-disabled="loadingService.isLoading()" />
+      </div>
+    </form>
+  </div>
+</div>

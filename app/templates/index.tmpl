@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="ECSPics">
+<head>
+  <title>ECSPics</title>
+  <link rel="stylesheet" type="text/css" href="/app/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="/app/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" type="text/css" href="/app/css/app.css" />
+
+  <script type="text/javascript" src="/app/javascript/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" src="/app/javascript/bootstrap.min.js"></script>
+  <script type="text/javascript" src="/app/javascript/angular.min.js"></script>
+  <!--<script type="text/javascript" src="/app/javascript/angular.js"></script>-->
+  <script type="text/javascript" src="/app/javascript/angular-sanitize.min.js"></script>
+  <script type="text/javascript" src="/app/javascript/angular-animate.min.js"></script>
+  <script type="text/javascript" src="/app/javascript/jquery.exif.js"></script>
+  <script type="text/javascript" src="/app/javascript/run_prettify.js"></script>
+  <script type="text/javascript" src="/app/javascript/json2.js"></script>
+  <script type="text/javascript" src="/app/javascript/app.js"></script>
+</head>
+<body ng-controller="PicsController as pics">
+
+  <pics-message></pics-message>
+
+  <div id="content" class="main container-fluid fullsize">
+    <div class="row">
+        <h1 class="logo col-md-12">ECSPics</h1>
+    </div>
+    <div class="row row-eq-height fullsize">
+      <div class="col-md-4">
+        <div class="row">
+          <pics-infos></pics-infos>
+          <div class="col-md-12">
+            <pics-search></pics-search>
+          </div>
+          <div class="col-md-12">
+            <pics-bucket></pics-bucket>
+          </div>
+          <div class="col-md-12">
+            <pics-upload></pics-upload>
+          </div>
+          <div class="col-md-12">
+            <a class="btn btn-large btn-danger" href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8 fullsize">
+        <div class="row fullsize">
+          <div class="col-md-12 fullsize">
+            <ul class="nav nav-tabs" role="tablist">
+              <li role="presentation" class="active"><a href="#map_tab" aria-controls="map_tab" role="tab" data-toggle="tab">Map</a></li>
+              <li role="presentation" ng-if="pics.pictures.length > 0"><a href="#pictures_tab" aria-controls="pictures_tab" role="tab" data-toggle="tab">Pictures <span class="badge" ng-if="pics.pictures.length > 0" ng-bind-html="pics.pictures.length"></span></a></li>
+            </ul>
+            <div id="tab-content" class="tab-content">
+              <div class="tab-pane active" id="map_tab">
+                <pics-bigmap></pics-bigmap>
+              </div>
+              <div id="pictures_tab" class="tab-pane">
+                <pics-show></pics-show>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script
+    src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDivJtiMdHo15SoCROG2RCExZRYzsjJ3xc">
+  </script>
+</body>
+</html>

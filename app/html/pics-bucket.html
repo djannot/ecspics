@@ -1,0 +1,17 @@
+<div class="panel panel-primary">
+  <div class="panel-heading">Create a new bucket</div>
+  <div class="panel-body">
+    <form accept-charset="UTF-8" ng-submit="bucketCtrl.createBucket()">
+      <div class="field">
+        <div class="input-group">
+          <span class="input-group-addon">Bucket name</span>
+          <input ng-model="bucketCtrl.bucket" class="form-control" type="text" />
+        </div>
+      </div>
+      <br />
+      <div class="actions">
+        <input class="btn btn-primary" type="submit" value="Create" ng-disabled="loadingService.isLoading()" />
+      </div>
+    </form>
+  </div>
+</div>

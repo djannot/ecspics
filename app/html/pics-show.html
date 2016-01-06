@@ -1,0 +1,13 @@
+<div class="row">
+  <div id="pictures" class="col-md-3" ng-repeat="picture in pics.pictures">
+    <div class="thumbnail">
+      <img ng-src="{{ picture.MediaUrl }}" />
+      <div class="caption">
+        <p class="center">
+          <a href="#" class="btn btn-primary btn-sm" ng-click ="showCtrl.displayPicture($index)"><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Show</a>
+          <a href="#" class="btn btn-danger btn-sm" ng-click ="showCtrl.deletePicture($index)"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
