@@ -69,7 +69,10 @@
       </div>
       <br />
       <div class="actions">
-        <input class="btn btn-primary" id="submit_button" name="commit" onclick='$("#submit_button").hide();' style="display:none;" type="submit" value="Upload file" ng-disabled="loadingService.isLoading()" />
+        <button id="submit_button" onclick='$("#submit_button").hide();' style="display:none;" class="btn btn-primary has-spinner" ng-disabled="loadingService.isLoading()" ng-class="{'active': loadingService.isLoading()}">
+          <span class="spinner"><i class="fa fa-refresh fa-spin"></i></span>
+          Upload file
+        </button>
       </div>
     </form>
   </div>
@@ -93,53 +96,14 @@
 
     function getThumbnail(original, scale) {
       var canvas = document.createElement("canvas")
-
       canvas.width = original.width * scale
       canvas.height = original.height * scale
-
       canvas.getContext("2d").drawImage
         (original, 0, 0, canvas.width, canvas.height)
-
       return canvas
     }
 
-    function decodeBase64(s) {
-      var e={},i,b=0,c,x,l=0,a,r='',w=String.fromCharCode,L=s.length;
-      var A="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-      for(i=0;i<64;i++){e[A.charAt(i)]=i;}
-      for(x=0;x<L;x++){
-        c=e[s.charAt(x)];b=(b<<6)+c;l+=6;
-        while(l>=8){((a=(b>>>(l-=8))&0xff)||(x<(L-2)))&&(r+=w(a));}
-      }
-      return r;
-    };
-
-    function b64toBlob(b64Data, contentType, sliceSize) {
-      contentType = contentType || '';
-      sliceSize = sliceSize || 512;
-
-      //var byteCharacters = atob(b64Data);
-      var byteCharacters = decodeBase64(b64Data);
-      var byteArrays = [];
-
-      for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-        var slice = byteCharacters.slice(offset, offset + sliceSize);
-
-        var byteNumbers = new Array(slice.length);
-        for (var i = 0; i < slice.length; i++) {
-          byteNumbers[i] = slice.charCodeAt(i);
-        }
-
-        var byteArray = new Uint8Array(byteNumbers);
-
-        byteArrays.push(byteArray);
-      }
-
-      var blob = new Blob(byteArrays, {type: contentType});
-      return blob;
-    }
-    var thumbnailData;
-    var thumbnail;
+    var canvas;
     $(document).ready(function() {
       $('#file').change(function() {
         $("#gps_latitude").val("");
@@ -152,30 +116,10 @@
         reader.onload = function (e) {
             var image  = new Image();
             image.src = e.target.result;
-            //console.log(e.target.result);
             image.onload = function() {
               $("#image_width").val(image.width);
               $("#image_height").val(image.height);
-              /*
-              thumbnail = getThumbnail(image, 1/10);
-              var contentType = file.type;
-              var readerData = new FileReader();
-              readerData.onload = function (eData) {
-                thumbnailData = b64toBlob(eData.target.result, contentType);
-                console.log(thumbnailData);
-              };
-              readerData.readAsArrayBuffer(thumbnail);
-              */
-              /*
-              thumbnail = getThumbnail(image, 1/10);
-              document.body.appendChild(thumbnail);
-              var contentType = file.type;
-              var dataURL = thumbnail.toDataURL(contentType);
-              console.log(dataURL);
-              thumbnailData = b64toBlob(dataURL, contentType);
-              $("#file_size").val(thumbnailData.size);
-              */
-              //http://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript
+              canvas = getThumbnail(image, 1/10);
             };
         };
         reader.readAsDataURL(file);

@@ -113,27 +113,43 @@ if (!String.prototype.encodeHTML) {
             });
         };
         this.executeUpload = function(data) {
-          headers = {};
-          for (var header in data["headers"]) {
-            headers[header] = data["headers"][header][0];
-          }
           var files = $("#file")[0].files;
-          var reader = new FileReader();
-          reader.onload = function(event) {
+          var pictureReader = new FileReader();
+          pictureReader.onload = function(event) {
             var content = event.target.result;
-            //console.log(blob);
-            //console.log(content);
             try {
+              var pictureHeaders = {};
+              for (var header in data["picture_headers"]) {
+                pictureHeaders[header] = data["picture_headers"][header][0];
+              }
+              $http({
+                url: data["picture_url"],
+                method: 'PUT',
+                headers: pictureHeaders,
+                data: new Uint8Array(content),
+                transformRequest: []
+              }).
+                success(function(data, status, headers, config) {
+                  $scope.pics.messagetitle = "Success";
+                  $scope.pics.messagebody = "Picture uploaded";
+                  $('#message').modal({show: true});
+                }).
+                error(function(data, status, headers, config) {
+                  $scope.pics.messagetitle = "Error";
+                  $scope.pics.messagebody = "Picture upload failed";
+                  $('#message').modal({show: true});
+                });
+              /*
               $.ajax({
-                url: data["url"],
+                url: data["picture_url"],
                 data: content,
                 cache: false,
                 processData: false,
                 type: 'PUT',
                 beforeSend: function (request)
                 {
-                  for (var header in data["headers"]) {
-                    request.setRequestHeader(header, data["headers"][header][0]);
+                  for (var header in data["picture_headers"]) {
+                    request.setRequestHeader(header, data["picture_headers"][header][0]);
                   }
                 },
                 success: function(data, textStatus, request){
@@ -146,20 +162,85 @@ if (!String.prototype.encodeHTML) {
                 error: function(data, textStatus, request){
                   $scope.$apply(function() {
                     $scope.pics.messagetitle = "Error";
-                    $scope.pics.messagebody = "Upload failed";
+                    $scope.pics.messagebody = "Picture upload failed";
                     $('#message').modal({show: true});
                   });
                 }
               });
+              */
             }
             catch (e) {
               $scope.pics.messagetitle = "Error";
-              $scope.pics.messagebody = "Upload failed";
+              $scope.pics.messagebody = "Picture upload failed";
               $('#message').modal({show: true});
             }
           }
-          reader.readAsArrayBuffer(files[0]);
-          //reader.readAsDataURL(thumbnailData);
+          pictureReader.readAsArrayBuffer(files[0]);
+
+          canvas.toBlob(function(blob) {
+            var thumbnailReader = new FileReader();
+            thumbnailReader.onload = function(event) {
+              var content = event.target.result;
+              try {
+                var thumbnailHeaders = {};
+                for (var header in data["thumbnail_headers"]) {
+                  thumbnailHeaders[header] = data["thumbnail_headers"][header][0];
+                }
+                $http({
+                  url: data["thumbnail_url"],
+                  method: 'PUT',
+                  headers: thumbnailHeaders,
+                  data: new Uint8Array(content),
+                  transformRequest: []
+                }).
+                  success(function(data, status, headers, config) {
+                    $scope.pics.messagetitle = "Success";
+                    $scope.pics.messagebody = "Thumbnail uploaded";
+                    $('#message').modal({show: true});
+                  }).
+                  error(function(data, status, headers, config) {
+                    $scope.pics.messagetitle = "Error";
+                    $scope.pics.messagebody = "Thumbnail upload failed";
+                    $('#message').modal({show: true});
+                  });
+                /*
+                $.ajax({
+                  url: data["thumbnail_url"],
+                  data: content,
+                  cache: false,
+                  processData: false,
+                  type: 'PUT',
+                  beforeSend: function (request)
+                  {
+                    for (var header in data["thumbnail_headers"]) {
+                      request.setRequestHeader(header, data["thumbnail_headers"][header][0]);
+                    }
+                  },
+                  success: function(data, textStatus, request){
+                    $scope.$apply(function() {
+                      $scope.pics.messagetitle = "Success";
+                      $scope.pics.messagebody = "Thumbnail uploaded";
+                      $('#message').modal({show: true});
+                    });
+                  },
+                  error: function(data, textStatus, request){
+                    $scope.$apply(function() {
+                      $scope.pics.messagetitle = "Error";
+                      $scope.pics.messagebody = "Thumbnail upload failed";
+                      $('#message').modal({show: true});
+                    });
+                  }
+                });
+                */
+              }
+              catch (e) {
+                $scope.pics.messagetitle = "Error";
+                $scope.pics.messagebody = "Thumbnail upload failed";
+                $('#message').modal({show: true});
+              }
+            }
+            thumbnailReader.readAsArrayBuffer(blob);
+          });
         };
       }],
       controllerAs: "uploadCtrl"
@@ -226,8 +307,8 @@ if (!String.prototype.encodeHTML) {
                 $scope.pics.pictures = data;
                 for (var i=0; i < $scope.pics.pictures.length; i++) {
                   var index = i;
-                  if (($scope.pics.pictures[i]["Metadatas"]["x-amz-meta-gps-latitude"] != "") && ($scope.pics.pictures[i]["Metadatas"]["x-amz-meta-gps-longitude"] != "")) {
-                    var myLatLng = {lat: parseFloat($scope.pics.pictures[i]["Metadatas"]["x-amz-meta-gps-latitude"]), lng: parseFloat($scope.pics.pictures[i]["Metadatas"]["x-amz-meta-gps-longitude"])};
+                  if (($scope.pics.pictures[i]["picture_metadatas"]["x-amz-meta-gps-latitude"] != "") && ($scope.pics.pictures[i]["picture_metadatas"]["x-amz-meta-gps-longitude"] != "")) {
+                    var myLatLng = {lat: parseFloat($scope.pics.pictures[i]["picture_metadatas"]["x-amz-meta-gps-latitude"]), lng: parseFloat($scope.pics.pictures[i]["picture_metadatas"]["x-amz-meta-gps-longitude"])};
                     var marker = new google.maps.Marker({
                       position: myLatLng,
                       map: $scope.pics.bigmap,
@@ -263,26 +344,26 @@ if (!String.prototype.encodeHTML) {
       controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
         $scope.pics = picsService;
         this.displayPicture = function(index) {
-          $scope.pics.messagetitle = $scope.pics.pictures[index]["Key"];
-          $scope.pics.messagebody = '<div class="picture"><img src="' + $scope.pics.pictures[index]["MediaUrl"] + '" /><br /><ul class="list-group"><li class="list-group-item">Url: <a href="' + $scope.pics.pictures[index]["MediaUrl"] + '">' + $scope.pics.pictures[index]["MediaUrl"] + '</a></li>';
-          if(typeof $scope.pics.pictures[index]["Metadatas"]["x-amz-meta-gps-latitude"] != "undefined") {
-            $scope.pics.messagebody += '<li class="list-group-item">Latitude: ' + $scope.pics.pictures[index]["Metadatas"]["x-amz-meta-gps-latitude"] + '</li>';
+          $scope.pics.messagetitle = $scope.pics.pictures[index]["picture_key"];
+          $scope.pics.messagebody = '<div class="picture"><img src="' + $scope.pics.pictures[index]["picture_url"] + '" /><br /><ul class="list-group"><li class="list-group-item">Url: <a href="' + $scope.pics.pictures[index]["picture_url"] + '">' + $scope.pics.pictures[index]["picture_url"] + '</a></li>';
+          if(typeof $scope.pics.pictures[index]["picture_metadatas"]["x-amz-meta-gps-latitude"] != "undefined") {
+            $scope.pics.messagebody += '<li class="list-group-item">Latitude: ' + $scope.pics.pictures[index]["picture_metadatas"]["x-amz-meta-gps-latitude"] + '</li>';
           }
-          if(typeof $scope.pics.pictures[index]["Metadatas"]["x-amz-meta-gps-longitude"] != "undefined") {
-            $scope.pics.messagebody += '<li class="list-group-item">Longitude: ' + $scope.pics.pictures[index]["Metadatas"]["x-amz-meta-gps-longitude"] + '</li>';
+          if(typeof $scope.pics.pictures[index]["picture_metadatas"]["x-amz-meta-gps-longitude"] != "undefined") {
+            $scope.pics.messagebody += '<li class="list-group-item">Longitude: ' + $scope.pics.pictures[index]["picture_metadatas"]["x-amz-meta-gps-longitude"] + '</li>';
           }
           $scope.pics.messagebody += '</ul></div>';
           $('#message').modal({show: true});
         };
         this.deletePicture = function(index) {
-          headers = {};
-          for (var header in $scope.pics.pictures[index]["DeleteRequestHeaders"]) {
-            headers[header] = $scope.pics.pictures[index]["DeleteRequestHeaders"][header][0];
+          pictureHeaders = {};
+          for (var header in $scope.pics.pictures[index]["delete_request_picture_headers"]) {
+            pictureHeaders[header] = $scope.pics.pictures[index]["delete_request_picture_headers"][header][0];
           }
           $http({
-            url: $scope.pics.pictures[index]["DeleteRequestUrl"],
+            url: $scope.pics.pictures[index]["delete_request_picture_url"],
             method: "DELETE",
-            headers: headers
+            headers: pictureHeaders
           }).
             success(function(data, status, headers, config) {
               $scope.pics.pictures.splice(index, 1);
@@ -302,6 +383,30 @@ if (!String.prototype.encodeHTML) {
               }
               $('#message').modal({show: true});
             });
+            thumbnailHeaders = {};
+            for (var header in $scope.pics.pictures[index]["delete_request_thumbnail_headers"]) {
+              thumbnailHeaders[header] = $scope.pics.pictures[index]["delete_request_thumbnail_headers"][header][0];
+            }
+            $http({
+              url: $scope.pics.pictures[index]["delete_request_thumbnail_url"],
+              method: "DELETE",
+              headers: thumbnailHeaders
+            }).
+              success(function(data, status, headers, config) {
+                /*
+                $scope.pics.messagetitle = "Success";
+                $scope.pics.messagebody = "Thumbnail deleted";
+                $('#message').modal({show: true});
+                */
+              }).
+              error(function(data, status, headers, config) {
+                $scope.pics.messagetitle = "Error";
+                $scope.pics.messagebody = "Thumbnail can't be deleted"
+                if(data != "") {
+                  $scope.pics.messagebody += "<br /><br /><pre class='prettyprint'><code class='language-xml'>" + data.encodeHTML() + "</pre></code>";
+                }
+                $('#message').modal({show: true});
+              });
         };
       }],
       controllerAs: "showCtrl"

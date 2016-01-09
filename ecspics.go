@@ -275,6 +275,7 @@ func Buckets(w http.ResponseWriter, r *http.Request) *appError {
     Namespace: ecs.Namespace,
   }
   response, _ := s3Request(s3, "", "GET", "/", make(map[string][]string), "")
+  log.Print(response)
   listBucketsResp := &ListBucketsResp{}
   xml.NewDecoder(strings.NewReader(response.Body)).Decode(listBucketsResp)
   buckets := []string{}
@@ -312,6 +313,7 @@ func CreateBucket(w http.ResponseWriter, r *http.Request) *appError {
   createBucketHeaders["x-emc-metadata-search"] = []string{"ObjectName,x-amz-meta-image-width;Integer,x-amz-meta-image-height;Integer,x-amz-meta-gps-latitude;Decimal,x-amz-meta-gps-longitude;Decimal"}
 
   createBucketResponse, _ := s3Request(s3, bucketName, "PUT", "/", createBucketHeaders, "")
+  log.Print(createBucketResponse)
   if createBucketResponse.Code == 200 {
     enableBucketCorsHeaders := map[string][]string{}
     enableBucketCorsHeaders["Content-Type"] = []string{"application/xml"}
@@ -371,7 +373,7 @@ func UploadPicture(w http.ResponseWriter, r *http.Request) *appError {
   bucketName := s["bucket"]
   retention := s["retention"]
   fileName := s["file_name"]
-  fileSize := s["file_size"]
+  //fileSize := s["file_size"]
   imageWidth := s["image_width"]
   imageHeight := s["image_height"]
   gpsLatitude := s["gps_latitude"]
@@ -379,40 +381,45 @@ func UploadPicture(w http.ResponseWriter, r *http.Request) *appError {
   datetime := s["datetime"]
 
   contentType := "binary/octet-stream"
-  headers := make(map[string][]string)
-  headers["Content-Length"] = []string{fileSize}
-  headers["Content-Type"] = []string{contentType}
+  pictureHeaders := make(map[string][]string)
+  //pictureHeaders["Content-Length"] = []string{fileSize}
+  thumbnailHeaders := make(map[string][]string)
+  pictureHeaders["Content-Type"] = []string{contentType}
+  thumbnailHeaders["Content-Type"] = []string{contentType}
   if retention != "" {
     i, err := strconv.Atoi(retention)
     if err != nil {
       return &appError{err: err, status: http.StatusBadRequest, json: "Can't use this retention value"}
     }
-    headers["x-emc-retention-period"] = []string{strconv.Itoa(i * 24 * 3600)}
+    pictureHeaders["x-emc-retention-period"] = []string{strconv.Itoa(i * 24 * 3600)}
+    thumbnailHeaders["x-emc-retention-period"] = []string{strconv.Itoa(i * 24 * 3600)}
   }
-  headers["x-amz-meta-image-width"] = []string{imageWidth}
-  headers["x-amz-meta-image-height"] = []string{imageHeight}
+  pictureHeaders["x-amz-meta-image-width"] = []string{imageWidth}
+  pictureHeaders["x-amz-meta-image-height"] = []string{imageHeight}
   if gpsLatitude != "" {
-    headers["x-amz-meta-gps-latitude"] = []string{gpsLatitude}
+    pictureHeaders["x-amz-meta-gps-latitude"] = []string{gpsLatitude}
   }
   if gpsLongitude != "" {
-    headers["x-amz-meta-gps-longitude"] = []string{gpsLongitude}
+    pictureHeaders["x-amz-meta-gps-longitude"] = []string{gpsLongitude}
   }
   if datetime != "" {
-    headers["x-amz-meta-datetime"] = []string{datetime}
+    pictureHeaders["x-amz-meta-datetime"] = []string{datetime}
   }
-  preparedS3Request, _ := prepareS3Request(s3, bucketName, "PUT", "/pictures/" + fileName, headers, true)
-  headersToSend := ""
-  for k, v := range headers {
-    headersToSend += `request.setRequestHeader('` + k + `','` + v[0] +`');
-                      `
-  }
+  preparedPictureS3Request, _ := prepareS3Request(s3, bucketName, "PUT", "/pictures/" + fileName, pictureHeaders, true)
+  preparedThumbnailS3Request, _ := prepareS3Request(s3, bucketName, "PUT", "/thumbnails/" + fileName, thumbnailHeaders, true)
+  delete(pictureHeaders, "host")
+  delete(thumbnailHeaders, "host")
 
   rendering.JSON(w, http.StatusOK, struct {
-    Headers map[string][]string `json:"headers"`
-    Url string `json:"url"`
+    PictureHeaders map[string][]string `json:"picture_headers"`
+    PictureUrl string `json:"picture_url"`
+    ThumbnailHeaders map[string][]string `json:"thumbnail_headers"`
+    ThumbnailUrl string `json:"thumbnail_url"`
   } {
-    Headers: headers,
-    Url: preparedS3Request.Url,
+    PictureHeaders: pictureHeaders,
+    PictureUrl: preparedPictureS3Request.Url,
+    ThumbnailHeaders: thumbnailHeaders,
+    ThumbnailUrl: preparedThumbnailS3Request.Url,
   })
   return nil
 }
@@ -429,11 +436,14 @@ type Query struct {
 }
 
 type Picture struct {
-  MediaUrl string
-  Key string
-  Metadatas map[string]string
-  DeleteRequestHeaders map[string][]string
-  DeleteRequestUrl string
+  PictureUrl string `json:"picture_url"`
+  ThumbnailUrl string `json:"thumbnail_url"`
+  PictureKey string `json:"picture_key"`
+  PictureMetadatas map[string]string `json:"picture_metadatas"`
+  DeleteRequestPictureHeaders map[string][]string `json:"delete_request_picture_headers"`
+  DeleteRequestPictureUrl string `json:"delete_request_picture_url"`
+  DeleteRequestThumbnailHeaders map[string][]string `json:"delete_request_thumbnail_headers"`
+  DeleteRequestThumbnailUrl string `json:"delete_request_thumbnail_url"`
 }
 
 func Search(w http.ResponseWriter, r *http.Request) *appError {
@@ -484,18 +494,33 @@ func Search(w http.ResponseWriter, r *http.Request) *appError {
     if len(bucketQueryResult.EntryLists) > 0 {
       for _, item := range bucketQueryResult.EntryLists {
         if item.ObjectName[len(item.ObjectName)-1:] != "/" {
-          expires := time.Now().Add(time.Second*3600)
-          headers := make(map[string][]string)
-          preparedS3Request, _ := prepareS3Request(s3, query.Bucket, "GET", item.ObjectName + "?Expires=" + strconv.FormatInt(expires.Unix(), 10), headers, true)
-          v := url.Values{}
-          v = preparedS3Request.Params
-          deleteHeaders := make(map[string][]string)
-          preparedS3DeleteRequest, _ := prepareS3Request(s3, query.Bucket, "DELETE", item.ObjectName, deleteHeaders, true)
+          expires := time.Now().Add(time.Second*24*3600)
+          pictureHeaders := make(map[string][]string)
+          preparedPictureS3Request, _ := prepareS3Request(s3, query.Bucket, "GET", item.ObjectName + "?Expires=" + strconv.FormatInt(expires.Unix(), 10), pictureHeaders, true)
+          pictureValues := url.Values{}
+          pictureValues = preparedPictureS3Request.Params
+          thumbnailHeaders := make(map[string][]string)
+          preparedThumbnailS3Request, _ := prepareS3Request(s3, query.Bucket, "GET", strings.Replace(item.ObjectName, "pictures/", "thumbnails/", 1) + "?Expires=" + strconv.FormatInt(expires.Unix(), 10), thumbnailHeaders, true)
+          thumbnailValues := url.Values{}
+          thumbnailValues = preparedThumbnailS3Request.Params
+          deletePictureHeaders := make(map[string][]string)
+          preparedPictureS3DeleteRequest, _ := prepareS3Request(s3, query.Bucket, "DELETE", item.ObjectName, deletePictureHeaders, true)
+          deleteThumbnailHeaders := make(map[string][]string)
+          preparedThumbnailS3DeleteRequest, _ := prepareS3Request(s3, query.Bucket, "DELETE", strings.Replace(item.ObjectName, "pictures/", "thumbnails/", 1), deleteThumbnailHeaders, true)
           metadatas := map[string]string{}
           for _, metadata := range item.Metadatas {
             metadatas[metadata.Key] = metadata.Value
           }
-          pictures = append(pictures, Picture{MediaUrl: strings.Split(preparedS3Request.Url, "?")[0] + "?" + v.Encode(), Key: item.ObjectName, DeleteRequestHeaders: deleteHeaders, DeleteRequestUrl: preparedS3DeleteRequest.Url, Metadatas: metadatas})
+          pictures = append(pictures, Picture{
+            PictureUrl: strings.Split(preparedPictureS3Request.Url, "?")[0] + "?" + pictureValues.Encode(),
+            ThumbnailUrl: strings.Split(preparedThumbnailS3Request.Url, "?")[0] + "?" + thumbnailValues.Encode(),
+            PictureKey: item.ObjectName,
+            DeleteRequestPictureHeaders: deletePictureHeaders,
+            DeleteRequestPictureUrl: preparedPictureS3DeleteRequest.Url,
+            DeleteRequestThumbnailHeaders: deleteThumbnailHeaders,
+            DeleteRequestThumbnailUrl: preparedThumbnailS3DeleteRequest.Url,
+            PictureMetadatas: metadatas,
+          })
         }
       }
     } else {

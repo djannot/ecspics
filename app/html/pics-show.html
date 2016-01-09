@@ -1,11 +1,17 @@
 <div class="row">
   <div id="pictures" class="col-md-3" ng-repeat="picture in pics.pictures">
     <div class="thumbnail">
-      <img ng-src="{{ picture.MediaUrl }}" />
+      <img ng-src="{{ picture['thumbnail_url'] }}" />
       <div class="caption">
         <p class="center">
-          <a href="#" class="btn btn-primary btn-sm" ng-click ="showCtrl.displayPicture($index)"><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Show</a>
-          <a href="#" class="btn btn-danger btn-sm" ng-click ="showCtrl.deletePicture($index)"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete</a>
+          <button class="btn btn-primary btn-sm has-spinner" ng-disabled="loadingService.isLoading()" ng-class="{'active': loadingService.isLoading()}" ng-click ="showCtrl.displayPicture($index)">
+            <span class="spinner"><i class="fa fa-refresh fa-spin"></i></span>
+            <span class="fa fa-camera-retro fa-lg" aria-hidden="true"></span> Show
+          </button>
+          <button class="btn btn-danger btn-sm has-spinner" ng-disabled="loadingService.isLoading()" ng-class="{'active': loadingService.isLoading()}" ng-click ="showCtrl.deletePicture($index)">
+            <span class="spinner"><i class="fa fa-refresh fa-spin"></i></span>
+            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete
+          </button>
         </p>
       </div>
     </div>

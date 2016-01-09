@@ -10,7 +10,10 @@
       </div>
       <br />
       <div class="actions">
-        <input class="btn btn-primary" type="submit" value="Create" ng-disabled="loadingService.isLoading()" />
+        <button class="btn btn-primary has-spinner" ng-disabled="loadingService.isLoading()" ng-class="{'active': loadingService.isLoading()}">
+          <span class="spinner"><i class="fa fa-refresh fa-spin"></i></span>
+          Create
+        </button>
       </div>
     </form>
   </div>
