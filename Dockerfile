@@ -1,6 +1,6 @@
 FROM google/golang
-ADD *go /go/src/ecspics/
-ADD app/ /go/src/ecspics/app/
+WORKDIR /go/src
+RUN git clone https://djannot:f1f5cd1cc5370c2a935d843e92863a82ccad4c15@github.com/djannot/ecspics.git
 WORKDIR /go/src/ecspics
 RUN go get "github.com/cloudfoundry-community/go-cfenv"
 RUN go get "github.com/codegangsta/negroni"

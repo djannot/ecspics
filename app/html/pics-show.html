@@ -4,8 +4,7 @@
       <img ng-src="{{ picture['thumbnail_url'] }}" />
       <div class="caption">
         <p class="center">
-          <button class="btn btn-primary btn-sm has-spinner" ng-disabled="loadingService.isLoading()" ng-class="{'active': loadingService.isLoading()}" ng-click ="showCtrl.displayPicture($index)">
-            <span class="spinner"><i class="fa fa-refresh fa-spin"></i></span>
+          <button class="btn btn-primary btn-sm" ng-disabled="loadingService.isLoading()" ng-click ="showCtrl.displayPicture($index)">
             <span class="fa fa-camera-retro fa-lg" aria-hidden="true"></span> Show
           </button>
           <button class="btn btn-danger btn-sm has-spinner" ng-disabled="loadingService.isLoading()" ng-class="{'active': loadingService.isLoading()}" ng-click ="showCtrl.deletePicture($index)">

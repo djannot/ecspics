@@ -101,12 +101,20 @@ if (!String.prototype.encodeHTML) {
             datetime: $("#datetime").val()
           }).
             success(function(data, status, headers, config) {
+              $('#upload_thumbnail_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
+              $('#upload_thumbnail_item').show();
+              $('#upload_picture_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
+              $('#upload_picture_item').show();
               $scope.pics.messagetitle = "Upload in progress";
               $scope.pics.messagebody = '<h3>JSON data received from the server to upload the file from the web browser (including the signature computed by the server):</h3><pre><code>' + JSON.stringify(data, undefined, 2) + '</code></pre>';
               $('#message').modal({show: true});
               $scope.uploadCtrl.executeUpload(data);
             }).
             error(function(data, status, headers, config) {
+              $('#upload_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-remove");
+              $('#upload_thumbnail_item').show();
+              $('#upload_picture_item > span > i').removeClass().addClass("glyphicon glyphicon-remove");
+              $('#upload_picture_item').show();
               $scope.pics.messagetitle = "Error";
               $scope.pics.messagebody = "Can't get javascript code from the server to upload the file";
               $('#message').modal({show: true});
@@ -130,46 +138,22 @@ if (!String.prototype.encodeHTML) {
                 transformRequest: []
               }).
                 success(function(data, status, headers, config) {
+                  $('#upload_picture_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
+                  /*
                   $scope.pics.messagetitle = "Success";
                   $scope.pics.messagebody = "Picture uploaded";
                   $('#message').modal({show: true});
+                  */
                 }).
                 error(function(data, status, headers, config) {
+                  $('#upload_picture_item > span > i').removeClass().addClass("glyphicon glyphicon-remove");
                   $scope.pics.messagetitle = "Error";
                   $scope.pics.messagebody = "Picture upload failed";
                   $('#message').modal({show: true});
                 });
-              /*
-              $.ajax({
-                url: data["picture_url"],
-                data: content,
-                cache: false,
-                processData: false,
-                type: 'PUT',
-                beforeSend: function (request)
-                {
-                  for (var header in data["picture_headers"]) {
-                    request.setRequestHeader(header, data["picture_headers"][header][0]);
-                  }
-                },
-                success: function(data, textStatus, request){
-                  $scope.$apply(function() {
-                    $scope.pics.messagetitle = "Success";
-                    $scope.pics.messagebody = "Picture uploaded";
-                    $('#message').modal({show: true});
-                  });
-                },
-                error: function(data, textStatus, request){
-                  $scope.$apply(function() {
-                    $scope.pics.messagetitle = "Error";
-                    $scope.pics.messagebody = "Picture upload failed";
-                    $('#message').modal({show: true});
-                  });
-                }
-              });
-              */
             }
             catch (e) {
+              $('#upload_picture_item > span > i').removeClass().addClass("glyphicon glyphicon-remove");
               $scope.pics.messagetitle = "Error";
               $scope.pics.messagebody = "Picture upload failed";
               $('#message').modal({show: true});
@@ -194,46 +178,22 @@ if (!String.prototype.encodeHTML) {
                   transformRequest: []
                 }).
                   success(function(data, status, headers, config) {
+                    $('#upload_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
+                    /*
                     $scope.pics.messagetitle = "Success";
                     $scope.pics.messagebody = "Thumbnail uploaded";
                     $('#message').modal({show: true});
+                    */
                   }).
                   error(function(data, status, headers, config) {
+                    $('#upload_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-remove");
                     $scope.pics.messagetitle = "Error";
                     $scope.pics.messagebody = "Thumbnail upload failed";
                     $('#message').modal({show: true});
                   });
-                /*
-                $.ajax({
-                  url: data["thumbnail_url"],
-                  data: content,
-                  cache: false,
-                  processData: false,
-                  type: 'PUT',
-                  beforeSend: function (request)
-                  {
-                    for (var header in data["thumbnail_headers"]) {
-                      request.setRequestHeader(header, data["thumbnail_headers"][header][0]);
-                    }
-                  },
-                  success: function(data, textStatus, request){
-                    $scope.$apply(function() {
-                      $scope.pics.messagetitle = "Success";
-                      $scope.pics.messagebody = "Thumbnail uploaded";
-                      $('#message').modal({show: true});
-                    });
-                  },
-                  error: function(data, textStatus, request){
-                    $scope.$apply(function() {
-                      $scope.pics.messagetitle = "Error";
-                      $scope.pics.messagebody = "Thumbnail upload failed";
-                      $('#message').modal({show: true});
-                    });
-                  }
-                });
-                */
               }
               catch (e) {
+                $('#upload_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-remove");
                 $scope.pics.messagetitle = "Error";
                 $scope.pics.messagebody = "Thumbnail upload failed";
                 $('#message').modal({show: true});
@@ -371,9 +331,6 @@ if (!String.prototype.encodeHTML) {
                 $scope.pics.markers[i].setMap(null);
               }
               $scope.pics.markers = [];
-              $scope.pics.messagetitle = "Success";
-              $scope.pics.messagebody = "Picture deleted";
-              $('#message').modal({show: true});
             }).
             error(function(data, status, headers, config) {
               $scope.pics.messagetitle = "Error";
@@ -393,11 +350,6 @@ if (!String.prototype.encodeHTML) {
               headers: thumbnailHeaders
             }).
               success(function(data, status, headers, config) {
-                /*
-                $scope.pics.messagetitle = "Success";
-                $scope.pics.messagebody = "Thumbnail deleted";
-                $('#message').modal({show: true});
-                */
               }).
               error(function(data, status, headers, config) {
                 $scope.pics.messagetitle = "Error";

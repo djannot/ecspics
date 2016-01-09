@@ -75,7 +75,29 @@
         </button>
       </div>
     </form>
+    <br />
+    <div id="upload_status">
+      <ul class="list-group">
+        <li id="create_thumbnail_item" class="list-group-item" style="display: none;">
+          Create thumbnail
+          <span class="badge"><i class="fa fa-refresh fa-spin"></i></span>
+        </li>
+        <li id="extract_metadata_item" class="list-group-item" style="display: none;">
+          Extract metadata
+          <span class="badge"><i class="fa fa-refresh fa-spin"></i></span>
+        </li>
+        <li id="upload_thumbnail_item" class="list-group-item" style="display: none;">
+          Upload thumbnail
+          <span class="badge"><i class="fa fa-refresh fa-spin"></i></span>
+        </li>
+        <li id="upload_picture_item" class="list-group-item" style="display: none;">
+          Upload picture
+          <span class="badge"><i class="fa fa-refresh fa-spin"></i></span>
+        </li>
+      </ul>
+    </div>
   </div>
+
   <script type="text/javascript">
     var extractMetadata = function(exifObject) {
       console.log(exifObject);
@@ -106,6 +128,13 @@
     var canvas;
     $(document).ready(function() {
       $('#file').change(function() {
+        console.log("ok");
+        $('#extract_metadata_item').hide();
+        $('#create_thumbnail_item').hide();
+        $('#upload_thumbnail_item').hide();
+        $('#upload_picture_item').hide();
+        $('#create_thumbnail_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
+        $('#create_thumbnail_item').show();
         $("#gps_latitude").val("");
         $("#gps_longitude").val("");
         $("#datetime").val("");
@@ -120,11 +149,14 @@
               $("#image_width").val(image.width);
               $("#image_height").val(image.height);
               canvas = getThumbnail(image, 1/10);
+              $('#create_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
             };
         };
         reader.readAsDataURL(file);
-
+        $('#extract_metadata_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
+        $('#extract_metadata_item').show();
         $(this).fileExif(extractMetadata);
+        $('#extract_metadata_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
         if($("#bucket").size() > 0) {
           $("#submit_button").show();
         }
