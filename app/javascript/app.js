@@ -108,6 +108,7 @@ if (!String.prototype.encodeHTML) {
               $scope.pics.messagetitle = "Upload in progress";
               $scope.pics.messagebody = '<h3>JSON data received from the server to upload the file from the web browser (including the signature computed by the server):</h3><pre><code>' + JSON.stringify(data, undefined, 2) + '</code></pre>';
               $('#message').modal({show: true});
+              setTimeout(function() { $('#message').modal('hide'); }, 10000);
               $scope.uploadCtrl.executeUpload(data);
             }).
             error(function(data, status, headers, config) {
@@ -144,6 +145,7 @@ if (!String.prototype.encodeHTML) {
                   $scope.pics.messagebody = "Picture uploaded";
                   $('#message').modal({show: true});
                   */
+                  $('#message').modal('hide');
                 }).
                 error(function(data, status, headers, config) {
                   $('#upload_picture_item > span > i').removeClass().addClass("glyphicon glyphicon-remove");
