@@ -12,6 +12,13 @@
       <input ng-model="uploadCtrl.file_name" id="file_name" name="file_name" type="hidden" />
       <div class="field">
         <div class="input-group">
+          <span class="input-group-addon">Picture URL</span>
+          <input ng-model="uploadCtrl.picture_url" class="form-control" id="picture_url" name="picture_url" placeholder="Either specify a URL or select a file" type="text" />
+        </div>
+      </div>
+      <br />
+      <div class="field">
+        <div class="input-group">
           <span class="input-group-addon">Bucket Name</span>
           <select class="form-control" id="bucket" name="bucket">
             <option ng-repeat="bucket in pics.buckets" value="{{ bucket }}">{{ bucket }}</option>
@@ -75,6 +82,11 @@
         </button>
       </div>
     </form>
+    <div>
+      <button class="btn btn-primary" ng-disabled="loadingService.isLoading()" ng-click ="uploadCtrl.getInformation()" ng-if="uploadCtrl.picture_url.length > 0">
+        <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Upload
+      </button>
+    </div>
     <br />
     <div id="upload_status">
       <ul class="list-group">
@@ -99,36 +111,8 @@
   </div>
 
   <script type="text/javascript">
-    var extractMetadata = function(exifObject) {
-      console.log(exifObject);
-      $("#image_width").val(exifObject.ImageWidth);
-      $("#image_height").val(exifObject.ImageHeight);
-      latitude = parseFloat(exifObject.GPSLatitude[0]) + parseFloat(exifObject.GPSLatitude[1]) / 60 + parseFloat(exifObject.GPSLatitude[2]) / 3600;
-      if(exifObject.GPSLatitudeRef == "S") {
-        latitude = - latitude;
-      }
-      longitude = parseFloat(exifObject.GPSLongitude[0]) + parseFloat(exifObject.GPSLongitude[1]) / 60 + parseFloat(exifObject.GPSLongitude[2]) / 3600;
-      if(exifObject.GPSLongitudeRef == "W") {
-        longitude = - longitude;
-      }
-      $("#gps_latitude").val(latitude);
-      $("#gps_longitude").val(longitude);
-      $("#datetime").val(exifObject.DateTime);
-    }
-
-    function getThumbnail(original, scale) {
-      var canvas = document.createElement("canvas")
-      canvas.width = original.width * scale
-      canvas.height = original.height * scale
-      canvas.getContext("2d").drawImage
-        (original, 0, 0, canvas.width, canvas.height)
-      return canvas
-    }
-
-    var canvas;
     $(document).ready(function() {
       $('#file').change(function() {
-        console.log("ok");
         $('#extract_metadata_item').hide();
         $('#create_thumbnail_item').hide();
         $('#upload_thumbnail_item').hide();
@@ -148,7 +132,7 @@
             image.onload = function() {
               $("#image_width").val(image.width);
               $("#image_height").val(image.height);
-              canvas = getThumbnail(image, 1/10);
+              thumbnail_canvas = getCanvas(image, 1/10);
               $('#create_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
             };
         };

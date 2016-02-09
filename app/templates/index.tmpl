@@ -13,6 +13,8 @@
   <!--<script type="text/javascript" src="/app/javascript/angular.js"></script>-->
   <script type="text/javascript" src="/app/javascript/angular-sanitize.min.js"></script>
   <script type="text/javascript" src="/app/javascript/angular-animate.min.js"></script>
+  <script type="text/javascript" src="/app/javascript/dirPagination.js"></script>
+  <script type="text/javascript" src="/app/javascript/exif.js"></script>
   <script type="text/javascript" src="/app/javascript/jquery.exif.js"></script>
   <script type="text/javascript" src="/app/javascript/run_prettify.js"></script>
   <script type="text/javascript" src="/app/javascript/json2.js"></script>
@@ -40,6 +42,14 @@
           <div class="col-md-12">
             <pics-upload></pics-upload>
           </div>
+          <!--
+          <div class="col-md-12">
+            <pics-twitter></pics-twitter>
+          </div>
+          -->
+          <div class="col-md-12">
+            <pics-fromlist></pics-fromlist>
+          </div>
           <div class="col-md-12">
             <a class="btn btn-large btn-danger" href="/logout">Logout</a>
           </div>
@@ -51,6 +61,8 @@
             <ul class="nav nav-tabs" role="tablist">
               <li role="presentation" class="active"><a href="#map_tab" aria-controls="map_tab" role="tab" data-toggle="tab">Map</a></li>
               <li role="presentation" ng-if="pics.pictures.length > 0"><a href="#pictures_tab" aria-controls="pictures_tab" role="tab" data-toggle="tab">Pictures <span class="badge" ng-if="pics.pictures.length > 0" ng-bind-html="pics.pictures.length"></span></a></li>
+              <!--<li role="presentation" ng-if="pics.tweets.length > 0"><a href="#twitter_pictures_tab" aria-controls="twitter_pictures_tab" role="tab" data-toggle="tab">Twitter Pictures <span class="badge" ng-if="pics.tweets.length > 0" ng-bind-html="pics.tweets.length"></span></a></li>-->
+              <li role="presentation" ng-if="pics.urllist.length > 0"><a href="#fromlist_pictures_tab" aria-controls="fromlist_pictures_tab" role="tab" data-toggle="tab">Imported Pictures <span class="badge" ng-if="pics.urllist.length > 0" ng-bind-html="pics.urllist.length"></span></a></li>
             </ul>
             <div id="tab-content" class="tab-content">
               <div class="tab-pane active" id="map_tab">
@@ -58,6 +70,14 @@
               </div>
               <div id="pictures_tab" class="tab-pane">
                 <pics-show></pics-show>
+              </div>
+              <!--
+              <div id="twitter_pictures_tab" class="tab-pane">
+                <pics-twitterpictures></pics-twitterpictures>
+              </div>
+              -->
+              <div id="fromlist_pictures_tab" class="tab-pane">
+                <pics-fromlistpictures></pics-fromlistpictures>
               </div>
             </div>
           </div>

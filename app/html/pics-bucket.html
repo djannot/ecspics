@@ -9,6 +9,18 @@
         </div>
       </div>
       <br />
+      <!--
+      Server-side encryption can't be used when metadata search is enabled with ECS 2.2
+      <div class="field">
+        <div class="input-group">
+          <input type="text" class="form-control" value="Encrypt data at rest" readonly="readonly">
+          <span class="input-group-addon">
+            <input ng-model="bucketCtrl.encrypted" id="encrypted" name="encrypted" type="checkbox" />
+          </span>
+        </div>
+      </div>
+      <br />
+      -->
       <div class="actions">
         <button class="btn btn-primary has-spinner" ng-disabled="loadingService.isLoading()" ng-class="{'active': loadingService.isLoading()}">
           <span class="spinner"><i class="fa fa-refresh fa-spin"></i></span>

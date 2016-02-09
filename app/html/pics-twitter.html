@@ -1,0 +1,60 @@
+<div class="panel panel-primary" ng-if="pics.buckets.length > 0">
+  <div class="panel-heading">Find pictures on Twitter</div>
+  <div class="panel-body">
+    <form accept-charset="UTF-8" ng-submit="twitterCtrl.searchPictures()">
+      <div class="field">
+        <div class="input-group">
+          <span class="input-group-addon">Twitter Consumer Key</span>
+          <input ng-model="twitterCtrl.twitter_consumer_key" class="form-control" id="twitter_consumer_key" name="twitter_consumer_key" type="text" />
+        </div>
+      </div>
+      <br />
+      <div class="field">
+        <div class="input-group">
+          <span class="input-group-addon">Twitter Consumer Secret</span>
+          <input ng-model="twitterCtrl.twitter_consumer_secret" class="form-control" id="twitter_consumer_secret" name="twitter_consumer_secret" type="text" />
+        </div>
+      </div>
+      <br />
+      <div class="field">
+        <div class="input-group">
+          <span class="input-group-addon">Twitter Access Token</span>
+          <input ng-model="twitterCtrl.twitter_access_token" class="form-control" id="twitter_access_token" name="twitter_access_token" type="text" />
+        </div>
+      </div>
+      <br />
+      <div class="field">
+        <div class="input-group">
+          <span class="input-group-addon">Twitter Access Token Secret</span>
+          <input ng-model="twitterCtrl.twitter_access_token_secret" class="form-control" id="twitter_access_token_secret" name="twitter_access_token_secret" type="text" />
+        </div>
+      </div>
+      <br />
+      <div class="field">
+        <div class="input-group">
+          <span class="input-group-addon">Keywords</span>
+          <input ng-model="twitterCtrl.twitter_keywords" class="form-control" id="twitter_keywords" name="twitter_keywords" placeholder="ex: keyword1,keyword2,keyword3" type="text" />
+        </div>
+      </div>
+      <br />
+      <div class="actions">
+        <button id="submit_button" class="btn btn-primary has-spinner"  ng-class="{'active': loadingService.isLoading()}">
+          <span class="spinner"><i class="fa fa-refresh fa-spin"></i></span>
+          Search
+        </button>
+      </div>
+    </form>
+    <button id="complete_fields" onclick="complete_fields()">Complete fields</button>
+    <br />
+  </div>
+</div>
+
+<script type="text/javascript">
+  function complete_fields() {
+    $("#twitter_consumer_key").val("8YoLV8INNKque3JFaBzDsiVbC");
+    $("#twitter_consumer_secret").val("6A0yYREjJBM7c3xd03TE0q3nKiFacKaIKax3tmJoMqkS6esb1W");
+    $("#twitter_access_token").val("16600770-woI4HAzVtl5x0NV4aYxN4e59QdtiD9xH4xBQYj7mR");
+    $("#twitter_access_token_secret").val("Gzh9O6dD3neozaaa9eVpikBilGq3OHXPbUctFih78BwIl");
+    $("#twitter_keywords").val("cars");
+  }
+</script>

@@ -1,5 +1,8 @@
 <div class="row">
-  <div id="pictures" class="col-md-3" ng-repeat="picture in pics.pictures">
+  <dir-pagination-controls></dir-pagination-controls>
+  <br />
+  <!--<div id="pictures" class="col-md-3" ng-repeat="picture in pics.pictures">-->
+  <div id="pictures" class="col-md-3" dir-paginate="picture in pics.pictures | itemsPerPage: 10">
     <div class="thumbnail">
       <img ng-src="{{ picture['thumbnail_url'] }}" />
       <div class="caption">

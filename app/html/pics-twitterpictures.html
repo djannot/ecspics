@@ -1,0 +1,14 @@
+<div class="row">
+  <div id="twitter_pictures" class="col-md-3" ng-repeat="tweet in pics.tweets">
+    <div class="thumbnail">
+      <img ng-src="{{ tweet['media_url'] }}" />
+      <div class="caption">
+        <p class="center">
+          <button class="btn btn-primary btn-sm" ng-disabled="loadingService.isLoading()" ng-click ="twitterpicturesCtrl.uploadPicture($index)">
+            <span class="glyphicon glyphicon-upload" aria-hidden="true"></span> Upload
+          </button>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

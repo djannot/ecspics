@@ -4,6 +4,39 @@ $(document).ready(function() {
 });
 */
 
+var thumbnail_canvas;
+var image_canvas;
+var image_data;
+
+var extractMetadata = function(exifObject) {
+  console.log(exifObject);
+  if(exifObject["ImageWidth"]) {
+    $("#image_width").val(exifObject["ImageWidth"]);
+  }
+  if(exifObject["ImageHeight"]) {
+    $("#image_height").val(exifObject["ImageHeight"]);
+  }
+  latitude = parseFloat(exifObject["GPSLatitude"][0]) + parseFloat(exifObject["GPSLatitude"][1]) / 60 + parseFloat(exifObject["GPSLatitude"][2]) / 3600;
+  if(exifObject["GPSLatitudeRef"] == "S") {
+    latitude = - latitude;
+  }
+  longitude = parseFloat(exifObject["GPSLongitude"][0]) + parseFloat(exifObject["GPSLongitude"][1]) / 60 + parseFloat(exifObject["GPSLongitude"][2]) / 3600;
+  if(exifObject["GPSLongitudeRef"] == "W") {
+    longitude = - longitude;
+  }
+  $("#gps_latitude").val(latitude);
+  $("#gps_longitude").val(longitude);
+  $("#datetime").val(exifObject["DateTime"]);
+}
+
+function getCanvas(original, scale) {
+  var canvas = document.createElement("canvas");
+  canvas.width = original.width * scale;
+  canvas.height = original.height * scale;
+  canvas.getContext("2d").drawImage(original, 0, 0, canvas.width, canvas.height);
+  return canvas
+}
+
 if (!String.prototype.encodeHTML) {
   String.prototype.encodeHTML = function () {
     return this.replace(/&/g, '&amp;')
@@ -52,6 +85,7 @@ if (!String.prototype.encodeHTML) {
     $scope.pics.buckets = [];
     $scope.pics.hostname = "";
     $scope.pics.ecs = {};
+    $scope.information = 0;
     $http.get('/api/v1/buckets').success(function(data) {
       $scope.pics.buckets = data;
     }).
@@ -88,6 +122,7 @@ if (!String.prototype.encodeHTML) {
       templateUrl: "app/html/pics-upload.html",
       controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
         $scope.pics = picsService;
+        $scope.pics.image  = new Image();
         this.uploadPicture = function(pics) {
           $http.post('/api/v1/uploadpicture', {
             bucket: $("#bucket").val(),
@@ -161,9 +196,14 @@ if (!String.prototype.encodeHTML) {
               $('#message').modal({show: true});
             }
           }
-          pictureReader.readAsArrayBuffer(files[0]);
+          if(files[0]) {
+            pictureReader.readAsArrayBuffer(files[0]);
+          } else {
+            pictureReader.readAsArrayBuffer(image_data);
+          }
 
-          canvas.toBlob(function(blob) {
+
+          thumbnail_canvas.toBlob(function(blob) {
             var thumbnailReader = new FileReader();
             thumbnailReader.onload = function(event) {
               var content = event.target.result;
@@ -204,6 +244,70 @@ if (!String.prototype.encodeHTML) {
             thumbnailReader.readAsArrayBuffer(blob);
           });
         };
+        this.getInformation = function() {
+          $('#extract_metadata_item').hide();
+          $('#create_thumbnail_item').hide();
+          $('#upload_thumbnail_item').hide();
+          $('#upload_picture_item').hide();
+          $('#create_thumbnail_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
+          $('#create_thumbnail_item').show();
+          $("#gps_latitude").val("");
+          $("#gps_longitude").val("");
+          $("#datetime").val("");
+          $("#file_name").val($("#picture_url").val().split('?')[0].substring($("#picture_url").val().lastIndexOf('/')+1));
+          /*
+          $scope.pics.image.crossOrigin = "anonymous";
+          $scope.pics.image.onload = function() {
+            $("#image_width").val($scope.pics.image.width);
+            console.log($scope.pics.image.width);
+            $("#image_height").val($scope.pics.image.height);
+            thumbnail_canvas = getCanvas($scope.pics.image, 1/10);
+            $('#create_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
+            EXIF.getData($scope.pics.image, function() {
+              extractMetadata(EXIF.getAllTags($scope.pics.image));
+            });
+          };
+          $scope.pics.image.src = $("#picture_url").val();
+          */
+
+          $http.get($("#picture_url").val(), {responseType: 'blob'}).
+            success(function(data, status, headers, config) {
+              $("#file_size").val(data.size);
+              image_data = data;
+
+              $scope.pics.image.crossOrigin = "anonymous";
+              $scope.pics.image.onload = function() {
+                $("#image_width").val($scope.pics.image.width);
+                console.log($scope.pics.image.width);
+                $("#image_height").val($scope.pics.image.height);
+                thumbnail_canvas = getCanvas($scope.pics.image, 1/10);
+                $('#create_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
+                EXIF.getData($scope.pics.image, function() {
+                  extractMetadata(EXIF.getAllTags($scope.pics.image));
+                });
+                $scope.information = 1;
+              };
+              $scope.pics.image.src = window.URL.createObjectURL(new Blob([data]));
+
+
+
+            }).
+            error(function(data, status, headers, config) {
+              $scope.pics.messagetitle = "Error";
+              $scope.pics.messagebody = data;
+              $('#message').modal({show: true});
+            });
+
+          $('#extract_metadata_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
+          $('#extract_metadata_item').show();
+
+          $('#extract_metadata_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
+          /*
+          if($("#bucket").size() > 0) {
+            $("#submit_button").show();
+          }
+          */
+        };
       }],
       controllerAs: "uploadCtrl"
     };
@@ -216,7 +320,7 @@ if (!String.prototype.encodeHTML) {
       controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
         $scope.pics = picsService;
         this.createBucket = function() {
-          $http.post('/api/v1/createbucket', {bucket: this.bucket}).
+          $http.post('/api/v1/createbucket', {bucket: this.bucket, encrypted: false}).
             success(function(data, status, headers, config) {
               $scope.pics.buckets.push(data["bucket"]);
               $scope.pics.messagetitle = "Success";
@@ -292,6 +396,7 @@ if (!String.prototype.encodeHTML) {
                 $scope.pics.messagebody = data;
                 $('#message').modal({show: true});
               });
+
           }
         };
       }],
@@ -364,6 +469,148 @@ if (!String.prototype.encodeHTML) {
         };
       }],
       controllerAs: "showCtrl"
+    };
+  });
+
+  app.directive("picsFromlist", function() {
+    return {
+      restrict: 'E',
+      templateUrl: "app/html/pics-fromlist.html",
+      controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
+        this.import = function() {
+          $scope.pics = picsService;
+          $scope.pics.urllist = [];
+          var files = $("#file-list")[0].files;
+          var fileReader = new FileReader();
+          fileReader.onload = function(event) {
+            var content = event.target.result;
+            var urls = content.split("\n");
+            for (var i=0; i < urls.length; i++) {
+              if(urls[i] != "") {
+                $scope.$apply(function() {
+                  $scope.pics.urllist.push(urls[i]);
+                });
+              }
+            }
+          }
+          fileReader.readAsText(files[0]);
+        };
+      }],
+      controllerAs: "fromlistCtrl"
+    };
+  });
+
+  app.directive("picsFromlistpictures", function() {
+    return {
+      restrict: 'E',
+      templateUrl: "app/html/pics-fromlistpictures.html",
+      controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
+        $scope.pics = picsService;
+        this.uploadPicture = function(index) {
+          var url = $scope.pics.urllist[index];
+          $("#picture_url").val(url);
+          $scope.uploadCtrl.getInformation();
+          $scope.$watch("information", function(newValue, oldValue) {
+            console.log(newValue);
+            if(newValue == 1) {
+              $scope.uploadCtrl.uploadPicture(index);
+              $scope.information = 0;
+            }
+          });
+        };
+      }],
+      controllerAs: "fromlistpicturesCtrl"
+    };
+  });
+
+  app.directive("picsTwitter", function() {
+    return {
+      restrict: 'E',
+      templateUrl: "app/html/pics-twitter.html",
+      controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
+        this.searchPictures = function() {
+          $scope.pics = picsService;
+          $scope.pics.tweets = {};
+          $http.post('/api/v1/twittersearch', {
+            twitter_consumer_key: this.twitter_consumer_key,
+            twitter_consumer_secret: this.twitter_consumer_secret,
+            twitter_access_token: this.twitter_access_token,
+            twitter_access_token_secret: this.twitter_access_token_secret,
+            twitter_keywords: this.twitter_keywords
+          }).
+            success(function(data, status, headers, config) {
+              $scope.pics.tweets = data;
+            }).
+            error(function(data, status, headers, config) {
+              $scope.pics.pictures = [];
+              $scope.pics.messagetitle = "Error";
+              $scope.pics.messagebody = data;
+              $('#message').modal({show: true});
+            });
+        };
+      }],
+      controllerAs: "twitterCtrl"
+    };
+  });
+
+
+  app.directive("picsTwitterpictures", function() {
+    return {
+      restrict: 'E',
+      templateUrl: "app/html/pics-twitterpictures.html",
+      controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
+        $scope.pics = picsService;
+        this.uploadPicture = function(index) {
+          $('#extract_metadata_item').hide();
+          $('#create_thumbnail_item').hide();
+          $('#upload_thumbnail_item').hide();
+          $('#upload_picture_item').hide();
+          $('#create_thumbnail_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
+          $('#create_thumbnail_item').show();
+          $("#gps_latitude").val("");
+          $("#gps_longitude").val("");
+          $("#datetime").val("");
+          $("#file_size").val(file.size);
+          $("#file_name").val(file.name);
+          var image  = new Image();
+          image.src = $scope.pics.tweets[index]["media_url"];
+          image.onload = function() {
+            $("#image_width").val(image.width);
+            $("#image_height").val(image.height);
+            canvas = getCanvas(image, 1/10);
+            $('#create_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
+          };
+          $('#extract_metadata_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
+          $('#extract_metadata_item').show();
+
+          var http = new XMLHttpRequest();
+          console.log($scope.pics.tweets[index]["media_url"]);
+          http.open("GET", "http://cache4.asset-cache.net/xt/581265297.jpg?v=1&g=fs1|0|FKF|65|297&s=1&b=RjI4", true);
+          http.responseType = "blob";
+          http.onload = function(e) {
+            if (this.status === 200) {
+              var image = new Image();
+              image.onload = function() {
+                EXIF.getData(image, function() {
+                  alert(EXIF.pretty(this));
+                });
+              };
+              image.src = URL.createObjectURL(http.response);
+            }
+          };
+          http.send();
+
+
+
+
+
+          $('#extract_metadata_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
+          if($("#bucket").size() > 0) {
+            $("#submit_button").show();
+          }
+        };
+      }],
+      controllerAs: "twitterpicturesCtrl"
     };
   });
 

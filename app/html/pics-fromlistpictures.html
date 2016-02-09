@@ -1,0 +1,14 @@
+<div class="row">
+  <div id="fromlist_pictures" class="col-md-3" ng-repeat="url in pics.urllist">
+    <div class="thumbnail">
+      <img ng-src="{{ url }}" />
+      <div class="caption">
+        <p class="center">
+          <button class="btn btn-primary btn-sm" ng-disabled="loadingService.isLoading()" ng-click ="fromlistpicturesCtrl.uploadPicture($index)">
+            <span class="glyphicon glyphicon-upload" aria-hidden="true"></span> Upload
+          </button>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

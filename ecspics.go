@@ -14,6 +14,7 @@ import (
   "strings"
   "time"
   cfenv "github.com/cloudfoundry-community/go-cfenv"
+  "github.com/ChimeraCoder/anaconda"
   "github.com/codegangsta/negroni"
   "github.com/gorilla/mux"
   "github.com/gorilla/sessions"
@@ -152,6 +153,7 @@ func main() {
   router.Handle("/api/v1/createbucket", appHandler(CreateBucket)).Methods("POST")
 	router.Handle("/api/v1/uploadpicture", appHandler(UploadPicture)).Methods("POST")
   router.Handle("/api/v1/search", appHandler(Search)).Methods("POST")
+  router.Handle("/api/v1/twittersearch", appHandler(TwitterSearch)).Methods("POST")
   router.HandleFunc("/login", Login)
   router.HandleFunc("/logout", Logout)
   router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", http.FileServer(http.Dir("app"))))
@@ -186,8 +188,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
     req, _ := http.NewRequest("GET", "https://" + ecs.Hostname + ":4443/login", nil)
     req.SetBasicAuth(user, password)
     resp, err := client.Do(req)
-    log.Print(req)
-    log.Print(resp)
     if err != nil{
         log.Print(err)
     }
@@ -275,7 +275,6 @@ func Buckets(w http.ResponseWriter, r *http.Request) *appError {
     Namespace: ecs.Namespace,
   }
   response, _ := s3Request(s3, "", "GET", "/", make(map[string][]string), "")
-  log.Print(response)
   listBucketsResp := &ListBucketsResp{}
   xml.NewDecoder(strings.NewReader(response.Body)).Decode(listBucketsResp)
   buckets := []string{}
@@ -285,6 +284,11 @@ func Buckets(w http.ResponseWriter, r *http.Request) *appError {
   rendering.JSON(w, http.StatusOK, buckets)
 
   return nil
+}
+
+type NewBucket struct {
+  Name string `json:"bucket"`
+  Encrypted bool `json:"encrypted"`
 }
 
 func CreateBucket(w http.ResponseWriter, r *http.Request) *appError {
@@ -300,20 +304,24 @@ func CreateBucket(w http.ResponseWriter, r *http.Request) *appError {
   }
 
   decoder := json.NewDecoder(r.Body)
-  var s map[string]string
-  err = decoder.Decode(&s)
+  var bucket NewBucket
+  err = decoder.Decode(&bucket)
   if err != nil {
     return &appError{err: err, status: http.StatusBadRequest, json: "Can't decode JSON data"}
   }
-  bucketName := s["bucket"]
 
   createBucketHeaders := map[string][]string{}
   createBucketHeaders["Content-Type"] = []string{"application/xml"}
   createBucketHeaders["x-emc-is-stale-allowed"] = []string{"true"}
   createBucketHeaders["x-emc-metadata-search"] = []string{"ObjectName,x-amz-meta-image-width;Integer,x-amz-meta-image-height;Integer,x-amz-meta-gps-latitude;Decimal,x-amz-meta-gps-longitude;Decimal"}
+  /*
+  Server-side encryption can't be used when metadata search is enabled with ECS 2.2
+  if bucket.Encrypted {
+    createBucketHeaders["x-emc-server-side-encryption-enabled"] = []string{"true"}
+  }
+  */
 
-  createBucketResponse, _ := s3Request(s3, bucketName, "PUT", "/", createBucketHeaders, "")
-  log.Print(createBucketResponse)
+  createBucketResponse, _ := s3Request(s3, bucket.Name, "PUT", "/", createBucketHeaders, "")
   if createBucketResponse.Code == 200 {
     enableBucketCorsHeaders := map[string][]string{}
     enableBucketCorsHeaders["Content-Type"] = []string{"application/xml"}
@@ -334,14 +342,14 @@ func CreateBucket(w http.ResponseWriter, r *http.Request) *appError {
        </CORSRule>
       </CORSConfiguration>
     `
-    enableBucketCorsResponse, _ := s3Request(s3, bucketName, "PUT", "/?cors", enableBucketCorsHeaders, corsConfiguration)
+    enableBucketCorsResponse, _ := s3Request(s3, bucket.Name, "PUT", "/?cors", enableBucketCorsHeaders, corsConfiguration)
     if enableBucketCorsResponse.Code == 200 {
       rendering.JSON(w, http.StatusOK, struct {
         CorsConfiguration string `json:"cors_configuration"`
         Bucket string `json:"bucket"`
       } {
         CorsConfiguration: corsConfiguration,
-        Bucket: bucketName,
+        Bucket: bucket.Name,
       })
     } else {
       return &appError{err: err, status: http.StatusBadRequest, json: "Bucket created, but CORS can't be enabled"}
@@ -529,4 +537,47 @@ func Search(w http.ResponseWriter, r *http.Request) *appError {
     rendering.JSON(w, http.StatusOK, pictures)
     return nil
   }
+}
+
+type Tweet struct {
+  MediaUrl string  `json:"media_url"`
+  Text string `json:"text"`
+}
+
+func TwitterSearch(w http.ResponseWriter, r *http.Request) *appError {
+  /*
+  session, err := store.Get(r, "session-name")
+  if err != nil {
+    return &appError{err: err, status: http.StatusInternalServerError, json: http.StatusText(http.StatusInternalServerError)}
+  }
+  */
+
+  decoder := json.NewDecoder(r.Body)
+  var s map[string]string
+  err := decoder.Decode(&s)
+  if err != nil {
+    return &appError{err: err, status: http.StatusBadRequest, json: "Can't decode JSON data"}
+  }
+
+  anaconda.SetConsumerKey(s["twitter_consumer_key"])
+  anaconda.SetConsumerSecret(s["twitter_consumer_secret"])
+  api := anaconda.NewTwitterApi(s["twitter_access_token"], s["twitter_access_token_secret"])
+
+  v := url.Values{}
+  v.Set("count", "100")
+  v.Set("result_type", "recent")
+  var tweets []Tweet
+  searchResult, err := api.GetSearch(s["twitter_keywords"], v)
+  if err != nil {
+    return &appError{err: err, status: http.StatusBadRequest, json: "Can't connect to the Twitter API. Verify your credentials"}
+  } else {
+    for _, tweet := range searchResult.Statuses {
+      if(len(tweet.Entities.Media) > 0 && tweet.Text[0:2] != "RT") {
+        tweets = append(tweets, Tweet{MediaUrl: tweet.Entities.Media[0].Media_url, Text: tweet.Text})
+      }
+    }
+    rendering.JSON(w, http.StatusOK, tweets)
+  }
+
+  return nil
 }
