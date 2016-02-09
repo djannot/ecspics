@@ -48,7 +48,7 @@ if (!String.prototype.encodeHTML) {
 }
 
 (function() {
-  var app = angular.module('ECSPics', ['ngAnimate', 'ngSanitize']);
+  var app = angular.module('ECSPics', ['ngAnimate', 'ngSanitize', 'angularUtils.directives.dirPagination']);
 
   app.value('loadingService', {
     loadingCount: 0,
