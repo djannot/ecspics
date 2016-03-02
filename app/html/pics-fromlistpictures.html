@@ -1,7 +1,7 @@
 <div class="row">
   <div id="fromlist_pictures" class="col-md-3" ng-repeat="url in pics.urllist">
     <div class="thumbnail">
-      <img ng-src="{{ url }}" />
+      <img ng-src="{{ url }}" class="thumbnail" />
       <div class="caption">
         <p class="center">
           <button class="btn btn-primary btn-sm" ng-disabled="loadingService.isLoading()" ng-click ="fromlistpicturesCtrl.uploadPicture($index)">

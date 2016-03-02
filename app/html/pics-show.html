@@ -2,15 +2,15 @@
   <dir-pagination-controls></dir-pagination-controls>
   <br />
   <!--<div id="pictures" class="col-md-3" ng-repeat="picture in pics.pictures">-->
-  <div id="pictures" class="col-md-3" dir-paginate="picture in pics.pictures | itemsPerPage: 10">
+  <div id="pictures" class="col-md-3" dir-paginate="picture in pics.pictures | itemsPerPage: 10" current-page="currentPage">
     <div class="thumbnail">
-      <img ng-src="{{ picture['thumbnail_url'] }}" />
+      <img ng-src="{{ picture['thumbnail_url'] }}" class="thumbnail" />
       <div class="caption">
         <p class="center">
-          <button class="btn btn-primary btn-sm" ng-disabled="loadingService.isLoading()" ng-click ="showCtrl.displayPicture($index)">
+          <button class="btn btn-primary btn-sm" ng-disabled="loadingService.isLoading()" ng-click ="showCtrl.displayPicture($index + (10 * (currentPage - 1)))">
             <span class="fa fa-camera-retro fa-lg" aria-hidden="true"></span> Show
           </button>
-          <button class="btn btn-danger btn-sm has-spinner" ng-disabled="loadingService.isLoading()" ng-class="{'active': loadingService.isLoading()}" ng-click ="showCtrl.deletePicture($index)">
+          <button class="btn btn-danger btn-sm has-spinner" ng-disabled="loadingService.isLoading()" ng-class="{'active': loadingService.isLoading()}" ng-click ="showCtrl.deletePicture($index + (10 * (currentPage - 1)))">
             <span class="spinner"><i class="fa fa-refresh fa-spin"></i></span>
             <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete
           </button>

@@ -143,7 +143,7 @@ if (!String.prototype.encodeHTML) {
               $scope.pics.messagetitle = "Upload in progress";
               $scope.pics.messagebody = '<h3>JSON data received from the server to upload the file from the web browser (including the signature computed by the server):</h3><pre><code>' + JSON.stringify(data, undefined, 2) + '</code></pre>';
               $('#message').modal({show: true});
-              setTimeout(function() { $('#message').modal('hide'); }, 10000);
+              //setTimeout(function() { $('#message').modal('hide'); }, 10000);
               $scope.uploadCtrl.executeUpload(data);
             }).
             error(function(data, status, headers, config) {
@@ -255,6 +255,7 @@ if (!String.prototype.encodeHTML) {
           $("#gps_longitude").val("");
           $("#datetime").val("");
           $("#file_name").val($("#picture_url").val().split('?')[0].substring($("#picture_url").val().lastIndexOf('/')+1));
+
           /*
           $scope.pics.image.crossOrigin = "anonymous";
           $scope.pics.image.onload = function() {
@@ -344,6 +345,7 @@ if (!String.prototype.encodeHTML) {
       templateUrl: "app/html/pics-search.html",
       controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
         $scope.pics = picsService;
+        $scope.currentPage = 1;
         $scope.pics.pictures = {};
         $scope.pics.markers = [];
         this.searchPics = function(pics) {

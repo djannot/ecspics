@@ -120,3 +120,7 @@ div.fullsize {
 #bigmap {
   height: 100%;
 }
+
+img.thumbnail {
+  height: 100px;
+}

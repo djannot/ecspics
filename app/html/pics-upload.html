@@ -134,6 +134,9 @@
               $("#image_height").val(image.height);
               thumbnail_canvas = getCanvas(image, 1/10);
               $('#create_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
+              if($("#bucket").size() > 0) {
+                $("#submit_button").show();
+              }
             };
         };
         reader.readAsDataURL(file);
@@ -141,9 +144,6 @@
         $('#extract_metadata_item').show();
         $(this).fileExif(extractMetadata);
         $('#extract_metadata_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
-        if($("#bucket").size() > 0) {
-          $("#submit_button").show();
-        }
       });
     });
   </script>
