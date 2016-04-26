@@ -19,7 +19,7 @@ And also a way to show some ECS unique capabilities:
 
 You need to create a Base URL with namespace on ECS because the application is using CORS.
 
-DOCKER CONTAINER
+BUILD
 --------------
 
 The Dockerfile can be used to create a Docker container for this web application.
@@ -30,6 +30,16 @@ If you don't have a key yet, you can get one at https://developers.google.com/ma
 
 Then, you can build it and run the container.
 
+RUN
+--------------
+
 To start the application, run ./ecspics -Namespace=<ECS Namespace> -EndPoint=<ECS endpoint using the Base URL> -Hostname=<ECS IP address>
 
 Note that your DNS need to resolve *.<ECS Base URL>.
+
+LICENSING
+--------------
+
+Licensed under the Apache License, Version 2.0 (the “License”); you may not use this file except in compliance with the License. You may obtain a copy of the License at <http://www.apache.org/licenses/LICENSE-2.0>
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
