@@ -1,13 +1,8 @@
-/*
-$(document).ready(function() {
-
-});
-*/
-
 var thumbnail_canvas;
 var image_canvas;
 var image_data;
 
+// Extract EXIF metadatas from the picture
 var extractMetadata = function(exifObject) {
   console.log(exifObject);
   if(exifObject["ImageWidth"]) {
@@ -29,6 +24,7 @@ var extractMetadata = function(exifObject) {
   $("#datetime").val(exifObject["DateTime"]);
 }
 
+// Clone a canvas with a different scale
 function getCanvas(original, scale) {
   var canvas = document.createElement("canvas");
   canvas.width = original.width * scale;
@@ -78,6 +74,7 @@ if (!String.prototype.encodeHTML) {
     $httpProvider.interceptors.push('loadingInterceptor');
   }]);
 
+  // Main controller that calls APIs to get the list of buckets and information about ECS
   app.controller('PicsController', ['$http', '$animate', '$scope', 'loadingService', 'picsService', function($http, $animate, $scope, loadingService, picsService) {
     $scope.pics = picsService;
     loadingCount = 0;
@@ -88,14 +85,6 @@ if (!String.prototype.encodeHTML) {
     $scope.information = 0;
     $http.get('/api/v1/buckets').success(function(data) {
       $scope.pics.buckets = data;
-    }).
-    error(function(data, status, headers, config) {
-      $scope.pics.messagetitle = "Error";
-      $scope.pics.messagebody = data;
-      $('#message').modal('show');
-    });
-    $http.get('/api/v1/hostname').success(function(data) {
-      $scope.pics.hostname = data;
     }).
     error(function(data, status, headers, config) {
       $scope.pics.messagetitle = "Error";
@@ -116,6 +105,7 @@ if (!String.prototype.encodeHTML) {
     return {}
   });
 
+  // Upload a picture and a thumbnail
   app.directive("picsUpload", function() {
     return {
       restrict: 'E',
@@ -123,6 +113,7 @@ if (!String.prototype.encodeHTML) {
       controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
         $scope.pics = picsService;
         $scope.pics.image  = new Image();
+        // Send information about the picture to let the server compute the signatures
         this.uploadPicture = function(pics) {
           $http.post('/api/v1/uploadpicture', {
             bucket: $("#bucket").val(),
@@ -156,6 +147,7 @@ if (!String.prototype.encodeHTML) {
               $('#message').modal({show: true});
             });
         };
+        // Upload the picture and thumbnail using the signatures provided by the server
         this.executeUpload = function(data) {
           var files = $("#file")[0].files;
           var pictureReader = new FileReader();
@@ -175,11 +167,6 @@ if (!String.prototype.encodeHTML) {
               }).
                 success(function(data, status, headers, config) {
                   $('#upload_picture_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
-                  /*
-                  $scope.pics.messagetitle = "Success";
-                  $scope.pics.messagebody = "Picture uploaded";
-                  $('#message').modal({show: true});
-                  */
                   $('#message').modal('hide');
                 }).
                 error(function(data, status, headers, config) {
@@ -221,11 +208,6 @@ if (!String.prototype.encodeHTML) {
                 }).
                   success(function(data, status, headers, config) {
                     $('#upload_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
-                    /*
-                    $scope.pics.messagetitle = "Success";
-                    $scope.pics.messagebody = "Thumbnail uploaded";
-                    $('#message').modal({show: true});
-                    */
                   }).
                   error(function(data, status, headers, config) {
                     $('#upload_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-remove");
@@ -244,6 +226,7 @@ if (!String.prototype.encodeHTML) {
             thumbnailReader.readAsArrayBuffer(blob);
           });
         };
+        // Extract information from the picture
         this.getInformation = function() {
           $('#extract_metadata_item').hide();
           $('#create_thumbnail_item').hide();
@@ -255,27 +238,10 @@ if (!String.prototype.encodeHTML) {
           $("#gps_longitude").val("");
           $("#datetime").val("");
           $("#file_name").val($("#picture_url").val().split('?')[0].substring($("#picture_url").val().lastIndexOf('/')+1));
-
-          /*
-          $scope.pics.image.crossOrigin = "anonymous";
-          $scope.pics.image.onload = function() {
-            $("#image_width").val($scope.pics.image.width);
-            console.log($scope.pics.image.width);
-            $("#image_height").val($scope.pics.image.height);
-            thumbnail_canvas = getCanvas($scope.pics.image, 1/10);
-            $('#create_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
-            EXIF.getData($scope.pics.image, function() {
-              extractMetadata(EXIF.getAllTags($scope.pics.image));
-            });
-          };
-          $scope.pics.image.src = $("#picture_url").val();
-          */
-
           $http.get($("#picture_url").val(), {responseType: 'blob'}).
             success(function(data, status, headers, config) {
               $("#file_size").val(data.size);
               image_data = data;
-
               $scope.pics.image.crossOrigin = "anonymous";
               $scope.pics.image.onload = function() {
                 $("#image_width").val($scope.pics.image.width);
@@ -289,31 +255,23 @@ if (!String.prototype.encodeHTML) {
                 $scope.information = 1;
               };
               $scope.pics.image.src = window.URL.createObjectURL(new Blob([data]));
-
-
-
             }).
             error(function(data, status, headers, config) {
               $scope.pics.messagetitle = "Error";
               $scope.pics.messagebody = data;
               $('#message').modal({show: true});
             });
-
           $('#extract_metadata_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
           $('#extract_metadata_item').show();
 
           $('#extract_metadata_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
-          /*
-          if($("#bucket").size() > 0) {
-            $("#submit_button").show();
-          }
-          */
         };
       }],
       controllerAs: "uploadCtrl"
     };
   });
 
+  // Crate a new bucket
   app.directive("picsBucket", function() {
     return {
       restrict: 'E',
@@ -339,6 +297,7 @@ if (!String.prototype.encodeHTML) {
     };
   });
 
+  // Send Metadata Search request
   app.directive("picsSearch", function() {
     return {
       restrict: 'E',
@@ -406,6 +365,7 @@ if (!String.prototype.encodeHTML) {
     };
   });
 
+  // Display pictures
   app.directive("picsShow", function() {
     return {
       restrict: 'E',
@@ -474,148 +434,7 @@ if (!String.prototype.encodeHTML) {
     };
   });
 
-  app.directive("picsFromlist", function() {
-    return {
-      restrict: 'E',
-      templateUrl: "app/html/pics-fromlist.html",
-      controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
-        this.import = function() {
-          $scope.pics = picsService;
-          $scope.pics.urllist = [];
-          var files = $("#file-list")[0].files;
-          var fileReader = new FileReader();
-          fileReader.onload = function(event) {
-            var content = event.target.result;
-            var urls = content.split("\n");
-            for (var i=0; i < urls.length; i++) {
-              if(urls[i] != "") {
-                $scope.$apply(function() {
-                  $scope.pics.urllist.push(urls[i]);
-                });
-              }
-            }
-          }
-          fileReader.readAsText(files[0]);
-        };
-      }],
-      controllerAs: "fromlistCtrl"
-    };
-  });
-
-  app.directive("picsFromlistpictures", function() {
-    return {
-      restrict: 'E',
-      templateUrl: "app/html/pics-fromlistpictures.html",
-      controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
-        $scope.pics = picsService;
-        this.uploadPicture = function(index) {
-          var url = $scope.pics.urllist[index];
-          $("#picture_url").val(url);
-          $scope.uploadCtrl.getInformation();
-          $scope.$watch("information", function(newValue, oldValue) {
-            console.log(newValue);
-            if(newValue == 1) {
-              $scope.uploadCtrl.uploadPicture(index);
-              $scope.information = 0;
-            }
-          });
-        };
-      }],
-      controllerAs: "fromlistpicturesCtrl"
-    };
-  });
-
-  app.directive("picsTwitter", function() {
-    return {
-      restrict: 'E',
-      templateUrl: "app/html/pics-twitter.html",
-      controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
-        this.searchPictures = function() {
-          $scope.pics = picsService;
-          $scope.pics.tweets = {};
-          $http.post('/api/v1/twittersearch', {
-            twitter_consumer_key: this.twitter_consumer_key,
-            twitter_consumer_secret: this.twitter_consumer_secret,
-            twitter_access_token: this.twitter_access_token,
-            twitter_access_token_secret: this.twitter_access_token_secret,
-            twitter_keywords: this.twitter_keywords
-          }).
-            success(function(data, status, headers, config) {
-              $scope.pics.tweets = data;
-            }).
-            error(function(data, status, headers, config) {
-              $scope.pics.pictures = [];
-              $scope.pics.messagetitle = "Error";
-              $scope.pics.messagebody = data;
-              $('#message').modal({show: true});
-            });
-        };
-      }],
-      controllerAs: "twitterCtrl"
-    };
-  });
-
-
-  app.directive("picsTwitterpictures", function() {
-    return {
-      restrict: 'E',
-      templateUrl: "app/html/pics-twitterpictures.html",
-      controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
-        $scope.pics = picsService;
-        this.uploadPicture = function(index) {
-          $('#extract_metadata_item').hide();
-          $('#create_thumbnail_item').hide();
-          $('#upload_thumbnail_item').hide();
-          $('#upload_picture_item').hide();
-          $('#create_thumbnail_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
-          $('#create_thumbnail_item').show();
-          $("#gps_latitude").val("");
-          $("#gps_longitude").val("");
-          $("#datetime").val("");
-          $("#file_size").val(file.size);
-          $("#file_name").val(file.name);
-          var image  = new Image();
-          image.src = $scope.pics.tweets[index]["media_url"];
-          image.onload = function() {
-            $("#image_width").val(image.width);
-            $("#image_height").val(image.height);
-            canvas = getCanvas(image, 1/10);
-            $('#create_thumbnail_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
-          };
-          $('#extract_metadata_item > span > i').removeClass().addClass("fa fa-refresh fa-spin");
-          $('#extract_metadata_item').show();
-
-          var http = new XMLHttpRequest();
-          console.log($scope.pics.tweets[index]["media_url"]);
-          http.open("GET", "http://cache4.asset-cache.net/xt/581265297.jpg?v=1&g=fs1|0|FKF|65|297&s=1&b=RjI4", true);
-          http.responseType = "blob";
-          http.onload = function(e) {
-            if (this.status === 200) {
-              var image = new Image();
-              image.onload = function() {
-                EXIF.getData(image, function() {
-                  alert(EXIF.pretty(this));
-                });
-              };
-              image.src = URL.createObjectURL(http.response);
-            }
-          };
-          http.send();
-
-
-
-
-
-          $('#extract_metadata_item > span > i').removeClass().addClass("glyphicon glyphicon-ok");
-          if($("#bucket").size() > 0) {
-            $("#submit_button").show();
-          }
-        };
-      }],
-      controllerAs: "twitterpicturesCtrl"
-    };
-  });
-
+  // Display the map
   app.directive("picsBigmap", function() {
     return {
       restrict: 'E',

@@ -14,7 +14,6 @@ import (
   "strings"
   "time"
   cfenv "github.com/cloudfoundry-community/go-cfenv"
-  "github.com/ChimeraCoder/anaconda"
   "github.com/codegangsta/negroni"
   "github.com/gorilla/mux"
   "github.com/gorilla/sessions"
@@ -95,7 +94,6 @@ func LoginMiddleware(h http.Handler) http.Handler {
         h.ServeHTTP(w, r)
       } else {
         http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-        //rendering.HTML(w, http.StatusOK, "login", nil)
       }
     }
   })
@@ -119,6 +117,7 @@ var ecs ECS
 func main() {
   var port = ""
   _, err := cfenv.Current()
+  // If the application isn't running on Cloud Foundry, then get the information from the command line arguments
   if(err != nil) {
     port = "80"
     endPointPtr := flag.String("EndPoint", "", "The Amazon S3 endpoint")
@@ -130,6 +129,7 @@ func main() {
       EndPoint: *endPointPtr,
       Namespace: *namespacePtr,
     }
+  // If the application is running on Cloud Founfry, then get the inforlation from environment variables
   } else {
     port = os.Getenv("PORT")
     ecs = ECS{
@@ -148,12 +148,10 @@ func main() {
   router := mux.NewRouter()
   router.HandleFunc("/", Index)
   router.Handle("/api/v1/buckets", appHandler(Buckets)).Methods("GET")
-  router.HandleFunc("/api/v1/hostname", Hostname).Methods("GET")
   router.HandleFunc("/api/v1/ecs", Ecs).Methods("GET")
   router.Handle("/api/v1/createbucket", appHandler(CreateBucket)).Methods("POST")
 	router.Handle("/api/v1/uploadpicture", appHandler(UploadPicture)).Methods("POST")
   router.Handle("/api/v1/search", appHandler(Search)).Methods("POST")
-  router.Handle("/api/v1/twittersearch", appHandler(TwitterSearch)).Methods("POST")
   router.HandleFunc("/login", Login)
   router.HandleFunc("/logout", Logout)
   router.PathPrefix("/app/").Handler(http.StripPrefix("/app/", http.FileServer(http.Dir("app"))))
@@ -176,6 +174,7 @@ type UserSecretKeyResult struct {
   SecretKey string `xml:"secret_key"`
 }
 
+// Validate credentials using the ECS self service API
 func Login(w http.ResponseWriter, r *http.Request) {
   if r.Method == "POST" {
     r.ParseForm()
@@ -185,6 +184,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
       TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
     }
     client := &http.Client{Transport: tr}
+    // Get token for the ECS management API using Active Directory credentials provided by the user
     req, _ := http.NewRequest("GET", "https://" + ecs.Hostname + ":4443/login", nil)
     req.SetBasicAuth(user, password)
     resp, err := client.Do(req)
@@ -194,6 +194,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
     if resp.StatusCode == 401 {
       rendering.HTML(w, http.StatusOK, "login", "Check your crententials and that you're allowed to generate a secret key on ECS")
     } else {
+      // Get the object user secret key if it already exists
       req, _ = http.NewRequest("GET", "https://" + ecs.Hostname + ":4443/object/secret-keys", nil)
       headers := map[string][]string{}
       headers["X-Sds-Auth-Token"] = []string{resp.Header.Get("X-Sds-Auth-Token")}
@@ -209,6 +210,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
       xml.NewDecoder(buf).Decode(userSecretKeysResult)
       secretKey = userSecretKeysResult.SecretKey1
       if secretKey == "" {
+        // If the secret key doesn't exist yet for this user, create it
         req, _ = http.NewRequest("POST", "https://" + ecs.Hostname + ":4443/object/secret-keys", bytes.NewBufferString("<secret_key_create_param></secret_key_create_param>"))
         headers["Content-Type"] = []string{"application/xml"}
         req.Header = headers
@@ -255,10 +257,6 @@ func Index(w http.ResponseWriter, r *http.Request) {
   rendering.HTML(w, http.StatusOK, "index", nil)
 }
 
-func Hostname(w http.ResponseWriter, r *http.Request) {
-  rendering.JSON(w, http.StatusOK, hostname)
-}
-
 func Ecs(w http.ResponseWriter, r *http.Request) {
   rendering.JSON(w, http.StatusOK, ecs)
 }
@@ -291,6 +289,7 @@ type NewBucket struct {
   Encrypted bool `json:"encrypted"`
 }
 
+// Create a new Amazon S3 bucket on ECS with CORS and Metadata Search enabled
 func CreateBucket(w http.ResponseWriter, r *http.Request) *appError {
   session, err := store.Get(r, "session-name")
   if err != nil {
@@ -310,18 +309,15 @@ func CreateBucket(w http.ResponseWriter, r *http.Request) *appError {
     return &appError{err: err, status: http.StatusBadRequest, json: "Can't decode JSON data"}
   }
 
+  // Add the necessary headers for Metadata Search and Access During Outage
   createBucketHeaders := map[string][]string{}
   createBucketHeaders["Content-Type"] = []string{"application/xml"}
   createBucketHeaders["x-emc-is-stale-allowed"] = []string{"true"}
   createBucketHeaders["x-emc-metadata-search"] = []string{"ObjectName,x-amz-meta-image-width;Integer,x-amz-meta-image-height;Integer,x-amz-meta-gps-latitude;Decimal,x-amz-meta-gps-longitude;Decimal"}
-  /*
-  Server-side encryption can't be used when metadata search is enabled with ECS 2.2
-  if bucket.Encrypted {
-    createBucketHeaders["x-emc-server-side-encryption-enabled"] = []string{"true"}
-  }
-  */
 
   createBucketResponse, _ := s3Request(s3, bucket.Name, "PUT", "/", createBucketHeaders, "")
+
+  // Enable CORS after the bucket creation to allow the web browser to send requests directly to ECS
   if createBucketResponse.Code == 200 {
     enableBucketCorsHeaders := map[string][]string{}
     enableBucketCorsHeaders["Content-Type"] = []string{"application/xml"}
@@ -360,6 +356,7 @@ func CreateBucket(w http.ResponseWriter, r *http.Request) *appError {
   return nil
 }
 
+// Compute the signatures to let the web browser send the picture and thumbnail to ECS
 func UploadPicture(w http.ResponseWriter, r *http.Request) *appError {
   session, err := store.Get(r, "session-name")
   if err != nil {
@@ -381,7 +378,6 @@ func UploadPicture(w http.ResponseWriter, r *http.Request) *appError {
   bucketName := s["bucket"]
   retention := s["retention"]
   fileName := s["file_name"]
-  //fileSize := s["file_size"]
   imageWidth := s["image_width"]
   imageHeight := s["image_height"]
   gpsLatitude := s["gps_latitude"]
@@ -390,7 +386,6 @@ func UploadPicture(w http.ResponseWriter, r *http.Request) *appError {
 
   contentType := "binary/octet-stream"
   pictureHeaders := make(map[string][]string)
-  //pictureHeaders["Content-Length"] = []string{fileSize}
   thumbnailHeaders := make(map[string][]string)
   pictureHeaders["Content-Type"] = []string{contentType}
   thumbnailHeaders["Content-Type"] = []string{contentType}
@@ -454,6 +449,8 @@ type Picture struct {
   DeleteRequestThumbnailUrl string `json:"delete_request_thumbnail_url"`
 }
 
+// Execture the Metadata search query and returns the resuls with the share URLs for the pictures and thumbnails to let the web browser get them from ECS
+// Also compute the signatures to let the browser delete the pictures on ECS
 func Search(w http.ResponseWriter, r *http.Request) *appError {
   session, err := store.Get(r, "session-name")
   if err != nil {
@@ -482,13 +479,7 @@ func Search(w http.ResponseWriter, r *http.Request) *appError {
   }
   path := ""
   if query.Area {
-    //swLongitude, _ := strconv.ParseFloat(query.SWLongitude, 64)
-    //neLongitude, _ := strconv.ParseFloat(query.NELongitude, 64)
-    //if swLongitude < neLongitude {
-      path = "/?query=x-amz-meta-image-width%20>%20" + imageWidth + "%20and%20x-amz-meta-image-height%20>%20" + imageHeight + "%20and%20x-amz-meta-gps-latitude%20>%20" + query.SWLatitude + "%20and%20x-amz-meta-gps-latitude%20<%20" + query.NELatitude + "%20and%20x-amz-meta-gps-longitude%20>%20" + query.SWLongitude + "%20and%20x-amz-meta-gps-longitude%20<%20" + query.NELongitude + "&attributes=Retention"
-    //} else {
-      //path = "/?query=x-amz-meta-image-width%20>%20" + imageWidth + "%20and%20x-amz-meta-image-height%20>%20" + imageHeight + "%20and%20x-amz-meta-gps-latitude%20>%20" + query.SWLatitude + "%20and%20x-amz-meta-gps-latitude%20<%20" + query.NELatitude + "%20and(%20x-amz-meta-gps-longitude%20>%20" + query.SWLongitude + "%20or%20x-amz-meta-gps-longitude%20<%20" + query.NELongitude + ")&attributes=Retention"
-    //}
+    path = "/?query=x-amz-meta-image-width%20>%20" + imageWidth + "%20and%20x-amz-meta-image-height%20>%20" + imageHeight + "%20and%20x-amz-meta-gps-latitude%20>%20" + query.SWLatitude + "%20and%20x-amz-meta-gps-latitude%20<%20" + query.NELatitude + "%20and%20x-amz-meta-gps-longitude%20>%20" + query.SWLongitude + "%20and%20x-amz-meta-gps-longitude%20<%20" + query.NELongitude + "&attributes=Retention"
   } else {
     path = "/?query=x-amz-meta-image-width%20>%20" + imageWidth + "%20and%20x-amz-meta-image-height%20>%20" + imageHeight + "&attributes=Retention"
   }
@@ -537,47 +528,4 @@ func Search(w http.ResponseWriter, r *http.Request) *appError {
     rendering.JSON(w, http.StatusOK, pictures)
     return nil
   }
-}
-
-type Tweet struct {
-  MediaUrl string  `json:"media_url"`
-  Text string `json:"text"`
-}
-
-func TwitterSearch(w http.ResponseWriter, r *http.Request) *appError {
-  /*
-  session, err := store.Get(r, "session-name")
-  if err != nil {
-    return &appError{err: err, status: http.StatusInternalServerError, json: http.StatusText(http.StatusInternalServerError)}
-  }
-  */
-
-  decoder := json.NewDecoder(r.Body)
-  var s map[string]string
-  err := decoder.Decode(&s)
-  if err != nil {
-    return &appError{err: err, status: http.StatusBadRequest, json: "Can't decode JSON data"}
-  }
-
-  anaconda.SetConsumerKey(s["twitter_consumer_key"])
-  anaconda.SetConsumerSecret(s["twitter_consumer_secret"])
-  api := anaconda.NewTwitterApi(s["twitter_access_token"], s["twitter_access_token_secret"])
-
-  v := url.Values{}
-  v.Set("count", "100")
-  v.Set("result_type", "recent")
-  var tweets []Tweet
-  searchResult, err := api.GetSearch(s["twitter_keywords"], v)
-  if err != nil {
-    return &appError{err: err, status: http.StatusBadRequest, json: "Can't connect to the Twitter API. Verify your credentials"}
-  } else {
-    for _, tweet := range searchResult.Statuses {
-      if(len(tweet.Entities.Media) > 0 && tweet.Text[0:2] != "RT") {
-        tweets = append(tweets, Tweet{MediaUrl: tweet.Entities.Media[0].Media_url, Text: tweet.Text})
-      }
-    }
-    rendering.JSON(w, http.StatusOK, tweets)
-  }
-
-  return nil
 }

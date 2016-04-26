@@ -10,7 +10,6 @@
   <script type="text/javascript" src="/app/javascript/jquery-2.1.4.min.js"></script>
   <script type="text/javascript" src="/app/javascript/bootstrap.min.js"></script>
   <script type="text/javascript" src="/app/javascript/angular.min.js"></script>
-  <!--<script type="text/javascript" src="/app/javascript/angular.js"></script>-->
   <script type="text/javascript" src="/app/javascript/angular-sanitize.min.js"></script>
   <script type="text/javascript" src="/app/javascript/angular-animate.min.js"></script>
   <script type="text/javascript" src="/app/javascript/dirPagination.js"></script>
@@ -32,7 +31,6 @@
     <div class="row row-eq-height fullsize">
       <div class="col-md-4">
         <div class="row">
-          <!--<pics-infos></pics-infos>-->
           <div class="col-md-12">
             <pics-search></pics-search>
           </div>
@@ -41,14 +39,6 @@
           </div>
           <div class="col-md-12">
             <pics-upload></pics-upload>
-          </div>
-          <!--
-          <div class="col-md-12">
-            <pics-twitter></pics-twitter>
-          </div>
-          -->
-          <div class="col-md-12">
-            <pics-fromlist></pics-fromlist>
           </div>
           <div class="col-md-12">
             <a class="btn btn-large btn-danger" href="/logout">Logout</a>
@@ -61,8 +51,6 @@
             <ul class="nav nav-tabs" role="tablist">
               <li role="presentation" class="active"><a href="#map_tab" aria-controls="map_tab" role="tab" data-toggle="tab">Map</a></li>
               <li role="presentation" ng-if="pics.pictures.length > 0"><a href="#pictures_tab" aria-controls="pictures_tab" role="tab" data-toggle="tab">Pictures <span class="badge" ng-if="pics.pictures.length > 0" ng-bind-html="pics.pictures.length"></span></a></li>
-              <!--<li role="presentation" ng-if="pics.tweets.length > 0"><a href="#twitter_pictures_tab" aria-controls="twitter_pictures_tab" role="tab" data-toggle="tab">Twitter Pictures <span class="badge" ng-if="pics.tweets.length > 0" ng-bind-html="pics.tweets.length"></span></a></li>-->
-              <li role="presentation" ng-if="pics.urllist.length > 0"><a href="#fromlist_pictures_tab" aria-controls="fromlist_pictures_tab" role="tab" data-toggle="tab">Imported Pictures <span class="badge" ng-if="pics.urllist.length > 0" ng-bind-html="pics.urllist.length"></span></a></li>
             </ul>
             <div id="tab-content" class="tab-content">
               <div class="tab-pane active" id="map_tab">
@@ -71,14 +59,6 @@
               <div id="pictures_tab" class="tab-pane">
                 <pics-show></pics-show>
               </div>
-              <!--
-              <div id="twitter_pictures_tab" class="tab-pane">
-                <pics-twitterpictures></pics-twitterpictures>
-              </div>
-              -->
-              <div id="fromlist_pictures_tab" class="tab-pane">
-                <pics-fromlistpictures></pics-fromlistpictures>
-              </div>
             </div>
           </div>
         </div>
@@ -86,7 +66,7 @@
     </div>
   </div>
   <script
-    src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDivJtiMdHo15SoCROG2RCExZRYzsjJ3xc">
+    src="http://maps.googleapis.com/maps/api/js?key=YOURKEY">
   </script>
 </body>
 </html>

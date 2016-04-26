@@ -12,13 +12,6 @@
       <input ng-model="uploadCtrl.file_name" id="file_name" name="file_name" type="hidden" />
       <div class="field">
         <div class="input-group">
-          <span class="input-group-addon">Picture URL</span>
-          <input ng-model="uploadCtrl.picture_url" class="form-control" id="picture_url" name="picture_url" placeholder="Either specify a URL or select a file" type="text" />
-        </div>
-      </div>
-      <br />
-      <div class="field">
-        <div class="input-group">
           <span class="input-group-addon">Bucket Name</span>
           <select class="form-control" id="bucket" name="bucket">
             <option ng-repeat="bucket in pics.buckets" value="{{ bucket }}">{{ bucket }}</option>
