@@ -17,6 +17,8 @@ And also a way to show some ECS unique capabilities:
 - Metadata search
 - The ability to apply retentions to object
 
+You need to create a Base URL with namespace on ECS because the application is using CORS.
+
 DOCKER CONTAINER
 --------------
 
@@ -28,4 +30,6 @@ If you don't have a key yet, you can get one at https://developers.google.com/ma
 
 Then, you can build it and run the container.
 
-To start the application, run ./ecspics -Namespace=<ECS Namespace> -EndPoint=<ECS Endpoing> -Hostname=<ECS IP address>
+To start the application, run ./ecspics -Namespace=<ECS Namespace> -EndPoint=<ECS endpoint using the Base URL> -Hostname=<ECS IP address>
+
+Note that your DNS need to resolve *.<ECS Base URL>.
