@@ -22,12 +22,10 @@ DOCKER CONTAINER
 
 The Dockerfile can be used to create a Docker container for this web application.
 
-A Docker container is also available in the Docker Hub (djannot/ecspics)
-
-To run the container, you need to execute the following command:
-
-- docker run -d -p 80:80 djannot/ecspics
-
-Then, you need to modify the app/templates/index.tmpl to indicate your Google Maps API key.
+You need to modify the Dockerfile to indicate your Google Maps API key.
 
 If you don't have a key yet, you can get one at https://developers.google.com/maps/signup
+
+Then, you can build it and run the container.
+
+To start the application, run ./ecspics -Namespace=<ECS Namespace> -EndPoint=<ECS Endpoing> -Hostname=<ECS IP address>
