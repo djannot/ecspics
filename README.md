@@ -24,13 +24,16 @@ BUILD
 --------------
 
 The Dockerfile can be used to create a Docker container for this web application.
-Just run thw following command in the folder that contains the Dockerfile: docker build -t ecspics . 
+
+Just run the following command in the folder that contains the Dockerfile: docker build -t ecspics . 
+
 Please note that you have to correct the Namespace, EndPoint and Hostname either in the Dockerfile or when running the container.
 
 RUN
 --------------
 
 To start the application, run: docker run -d ecspics
+
 Or if you want to override the settings for Namespace, EndPoint and Hostname: docker run -d ecspics "-Namespace=ns01 -Hostname=10.10.10.1 -EndPoint=http://namespaces.ecs-local.local:9020"
 
 LICENSING
