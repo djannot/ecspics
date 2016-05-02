@@ -5,7 +5,6 @@ import (
   "crypto/tls"
   "encoding/json"
   "encoding/xml"
-  "flag"
   "log"
   "net/http"
   "net/url"
@@ -13,7 +12,6 @@ import (
   "strconv"
   "strings"
   "time"
-  cfenv "github.com/cloudfoundry-community/go-cfenv"
   "github.com/codegangsta/negroni"
   "github.com/gorilla/mux"
   "github.com/gorilla/sessions"
@@ -116,27 +114,12 @@ var ecs ECS
 
 func main() {
   var port = ""
-  _, err := cfenv.Current()
-  // If the application isn't running on Cloud Foundry, then get the information from the command line arguments
-  if(err != nil) {
-    port = "80"
-    endPointPtr := flag.String("EndPoint", "", "The Amazon S3 endpoint")
-    namespacePtr := flag.String("Namespace", "", "The ViPR namespace if used in the Object Base URL")
-    hostnamePtr := flag.String("Hostname", "", "The ECS hostname or IP address")
-    flag.Parse()
-    ecs = ECS{
-      Hostname: *hostnamePtr,
-      EndPoint: *endPointPtr,
-      Namespace: *namespacePtr,
-    }
-  // If the application is running on Cloud Founfry, then get the inforlation from environment variables
-  } else {
-    port = os.Getenv("PORT")
-    ecs = ECS{
-      Hostname: os.Getenv("HOSTNAME"),
-      EndPoint: os.Getenv("ENDPOINT"),
-      Namespace: os.Getenv("NAMESPACE"),
-    }
+  // get all the environment data
+  port = os.Getenv("PORT")
+  ecs = ECS{
+    Hostname: os.Getenv("HOSTNAME"),
+    EndPoint: os.Getenv("ENDPOINT"),
+    Namespace: os.Getenv("NAMESPACE"),
   }
 
   hostname, _ = os.Hostname()

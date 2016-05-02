@@ -32,9 +32,12 @@ Please note that you have to correct the Namespace, EndPoint and Hostname either
 RUN
 --------------
 
-To start the application, run: docker run -d ecspics
+To start the application, run: 
+docker run -p 8080:80 -e "PORT=80 -e HOSTNAME=10.10.10.1 -e ENDPOINT=http://ecs-vip.local.net:9020 -e NAMESPACE=ns01 ecspics
 
-Or if you want to override the settings for Namespace, EndPoint and Hostname: docker run -d ecspics "-Namespace=ns01 -Hostname=10.10.10.1 -EndPoint=http://namespaces.ecs-local.local:9020"
+The parameters are the ECS Hostname or IP, the ECS Endpoint (or Loadbalancer) and the Namespace to use.
+
+The application will be available on http://<ip of application host>:8080
 
 LICENSING
 --------------
