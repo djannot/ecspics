@@ -37,7 +37,7 @@ docker run -p 8080:80 -e "PORT=80 -e HOSTNAME=10.10.10.1 -e ENDPOINT=http://ecs-
 
 The parameters are the ECS Hostname or IP, the ECS Endpoint (or Loadbalancer) and the Namespace to use.
 
-The application will be available on http://<ip of application host>:8080
+The application will be available on http://.<ip of application host.>:8080
 
 LICENSING
 --------------
