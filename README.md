@@ -18,7 +18,7 @@ And also a way to show some ECS unique capabilities:
 - The ability to apply retentions to object
 
 You need to create a Base URL with namespace on ECS because the application is using CORS.
-Note that your DNS need to resolve *.<ECS Base URL>.
+Note that your DNS need to resolve *.\<ECS Base URL\>.
 
 BUILD
 --------------
@@ -37,7 +37,7 @@ docker run -p 8080:80 -e "PORT=80 -e HOSTNAME=10.10.10.1 -e ENDPOINT=http://ecs-
 
 The parameters are the ECS Hostname or IP, the ECS Endpoint (or Loadbalancer) and the Namespace to use.
 
-The application will be available on http://.<ip of application host.>:8080
+The application will be available on http://\<ip of application host\>:8080
 
 LICENSING
 --------------
