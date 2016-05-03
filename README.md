@@ -18,24 +18,26 @@ And also a way to show some ECS unique capabilities:
 - The ability to apply retentions to object
 
 You need to create a Base URL with namespace on ECS because the application is using CORS.
+Note that your DNS need to resolve *.\<ECS Base URL\>.
 
 BUILD
 --------------
 
 The Dockerfile can be used to create a Docker container for this web application.
 
-You need to modify the Dockerfile to indicate your Google Maps API key.
+Just run the following command in the folder that contains the Dockerfile: docker build -t ecspics . 
 
-If you don't have a key yet, you can get one at https://developers.google.com/maps/signup
-
-Then, you can build it and run the container.
+Please note that you have to correct the Namespace, EndPoint and Hostname either in the Dockerfile or when running the container.
 
 RUN
 --------------
 
-To start the application, run ./ecspics -Namespace=<ECS Namespace> -EndPoint=<ECS endpoint using the Base URL> -Hostname=<ECS IP address>
+To start the application, run: 
+docker run -p 8080:80 -e "PORT=80 -e HOSTNAME=10.10.10.1 -e ENDPOINT=http://ecs-vip.local.net:9020 -e NAMESPACE=ns01 ecspics
 
-Note that your DNS need to resolve *.<ECS Base URL>.
+The parameters are the ECS Hostname or IP, the ECS Endpoint (or Loadbalancer) and the Namespace to use.
+
+The application will be available on http://\<ip of application host\>:8080
 
 LICENSING
 --------------
