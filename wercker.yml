@@ -41,3 +41,21 @@ build:
         name: go build
         code: |
           go build .
+    
+    # Copy binary to location that gets passed along to deploy
+    - script:
+        name: copy binary
+        code: cp ecspics "$WERCKER_OUTPUT_DIR"
+
+deploy:
+    box: google/golang
+    steps:
+    # use the scratch step to build a container from scratch based on the files present
+    - internal/docker-scratch-push:
+        username: $DOCKER_HUB_USERNAME
+        password: $DOCKER_HUB_PASSWORD
+        cmd: ./app
+        tag: $WERCKER_GIT_COMMIT
+        ports: "80"
+        repository: djannot/ecspics/
+        registry: https://hub.docker.com
