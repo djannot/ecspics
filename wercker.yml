@@ -46,7 +46,6 @@ build:
     - script:
         name: copy binary
         code: cp ecspics "$WERCKER_OUTPUT_DIR"
-
 deploy:
     box: google/golang
     steps:
