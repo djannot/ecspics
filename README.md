@@ -1,6 +1,8 @@
 ECSPics
 ==============
 
+[![wercker status](https://app.wercker.com/status/ee4a5af9191817fee967b3ad43ddaf84/m "wercker status")](https://app.wercker.com/project/bykey/ee4a5af9191817fee967b3ad43ddaf84)
+
 OVERVIEW
 --------------
 
