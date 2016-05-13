@@ -39,8 +39,7 @@ build:
     # Build the project
     - script:
         name: go build
-        code: |
-          go build .
+        code: CGO_ENABLED=0 go build -a -ldflags '-s' -installsuffix cgo -o ecspics .
     
     # Copy binary to location that gets passed along to deploy
     - script:
