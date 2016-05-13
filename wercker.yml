@@ -54,7 +54,7 @@ deploy:
     - internal/docker-scratch-push:
         username: $DOCKER_HUB_USERNAME
         password: $DOCKER_HUB_PASSWORD
-        cmd: ./app
+        cmd: ./ecspics
         tag: $WERCKER_GIT_COMMIT
         ports: "80"
         repository: djannot/ecspics
