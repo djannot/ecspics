@@ -203,7 +203,9 @@ func s3Request(s3 S3, bucket string, method string, path string, headers map[str
   if body != "" {
     headers["Content-Length"] = []string{strconv.Itoa(len(body))}
   }
-  url := preparedS3Request.Url
+  u, _ := url.Parse(preparedS3Request.Url)
+  parameters, _ := url.ParseQuery(u.RawQuery)
+  u.RawQuery = parameters.Encode()
   if err != nil {
     return Response{}, err
   }
@@ -211,7 +213,7 @@ func s3Request(s3 S3, bucket string, method string, path string, headers map[str
     TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
   }
   httpClient := &http.Client{Transport: tr}
-  req, err := http.NewRequest(method, url, bytes.NewBufferString(body))
+  req, err := http.NewRequest(method, u.String(), bytes.NewBufferString(body))
   if err != nil {
     return Response{}, err
   }

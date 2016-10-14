@@ -462,9 +462,9 @@ func Search(w http.ResponseWriter, r *http.Request) *appError {
   }
   path := ""
   if query.Area {
-    path = "/?query=x-amz-meta-image-width%20>%20" + imageWidth + "%20and%20x-amz-meta-image-height%20>%20" + imageHeight + "%20and%20x-amz-meta-gps-latitude%20>%20" + query.SWLatitude + "%20and%20x-amz-meta-gps-latitude%20<%20" + query.NELatitude + "%20and%20x-amz-meta-gps-longitude%20>%20" + query.SWLongitude + "%20and%20x-amz-meta-gps-longitude%20<%20" + query.NELongitude + "&attributes=Retention"
+    path = "/?query=x-amz-meta-image-width > " + imageWidth + " and x-amz-meta-image-height > " + imageHeight + " and x-amz-meta-gps-latitude > " + query.SWLatitude + " and x-amz-meta-gps-latitude < " + query.NELatitude + " and x-amz-meta-gps-longitude > " + query.SWLongitude + " and x-amz-meta-gps-longitude < " + query.NELongitude + "&attributes=Retention"
   } else {
-    path = "/?query=x-amz-meta-image-width%20>%20" + imageWidth + "%20and%20x-amz-meta-image-height%20>%20" + imageHeight + "&attributes=Retention"
+    path = "/?query=x-amz-meta-image-width > " + imageWidth + " and x-amz-meta-image-height > " + imageHeight + "&attributes=Retention"
   }
   bucketQueryResponse, err := s3Request(s3, query.Bucket, "GET", path, make(map[string][]string), "")
   if err != nil {
