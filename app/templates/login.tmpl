@@ -28,12 +28,22 @@
           <div id="alert-danger" class="alert alert-danger">{{.}}</div>
         {{ end }}
         <div class="panel panel-primary">
-          <div class="panel-heading">Login with your Active Directory account</div>
+          <div class="panel-heading">Login with your Active Directory or your object user account</div>
           <div class="panel-body">
             <form accept-charset="UTF-8" action="/login" id="viewForm" method="post">
               <div class="field">
                 <div class="input-group">
-                  <span class="input-group-addon">Active Directory User</span>
+                  <span class="input-group-addon">Authentication method</span>
+                  <select class="form-control" id="authentication" name="authentication">
+                    <option value="ad">Active Directory</option>
+                    <option value="objectuser">Object User</option>
+                  </select>
+                </div>
+              </div>
+              <br />
+              <div class="field">
+                <div class="input-group">
+                  <span class="input-group-addon">User</span>
                   <input class="form-control" id="user" name="user" type="text" />
                 </div>
               </div>
@@ -42,6 +52,13 @@
                 <div class="input-group">
                   <span class="input-group-addon">Password</span>
                   <input class="form-control" id="password" name="password" type="password" />
+                </div>
+              </div>
+              <br />
+              <div class="field">
+                <div class="input-group">
+                  <span class="input-group-addon">ECS endpoint</span>
+                  <input class="form-control" id="endpoint" name="endpoint" type="text" />
                 </div>
               </div>
               <br />
