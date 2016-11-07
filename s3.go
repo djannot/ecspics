@@ -162,19 +162,18 @@ func prepareS3Request(s3 S3, bucket string, method string, pathWithParams string
     headers["x-amz-date"] = []string{time.Now().UTC().Format(time.RFC1123)}
   }
 
-  /*
-  if s3.Namespace != "" && ! strings.HasPrefix(canonicalPath, "/" + s3.Namespace) && namespaceInHost {
-    canonicalPath = "/" + s3.Namespace + canonicalPath +
-  }
-  */
-
   host := endPoint.Host
   canonicalPath := path
 
   if s3.Namespace != "" {
     if namespaceInHost {
-      host = bucket + "." + s3.Namespace + "." + host
-      canonicalPath = "/" + bucket + path
+      if bucket != "" {
+        host = bucket + "." + s3.Namespace + "." + host
+        canonicalPath = "/" + bucket + path
+      } else {
+        host = s3.Namespace + "." + host
+        canonicalPath = "/"
+      }
     } else {
       headers["x-emc-namespace"] = []string{s3.Namespace}
     }
@@ -199,7 +198,7 @@ func prepareS3Request(s3 S3, bucket string, method string, pathWithParams string
 }
 
 func s3Request(s3 S3, bucket string, method string, path string, headers map[string][]string, body string) (Response, error) {
-  preparedS3Request, err := prepareS3Request(s3, bucket, method, path, headers, false)
+  preparedS3Request, err := prepareS3Request(s3, bucket, method, path, headers, true)
   if body != "" {
     headers["Content-Length"] = []string{strconv.Itoa(len(body))}
   }
@@ -219,6 +218,8 @@ func s3Request(s3 S3, bucket string, method string, path string, headers map[str
   }
   req.Header = headers
   resp, err := httpClient.Do(req)
+  log.Println(req)
+  log.Println(resp)
   if err != nil {
     return Response{}, err
   }

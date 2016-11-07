@@ -81,18 +81,9 @@ if (!String.prototype.encodeHTML) {
     $scope.loadingService = loadingService;
     $scope.pics.buckets = [];
     $scope.pics.hostname = "";
-    $scope.pics.ecs = {};
     $scope.information = 0;
     $http.get('/api/v1/buckets').success(function(data) {
       $scope.pics.buckets = data;
-    }).
-    error(function(data, status, headers, config) {
-      $scope.pics.messagetitle = "Error";
-      $scope.pics.messagebody = data;
-      $('#message').modal('show');
-    });
-    $http.get('/api/v1/ecs').success(function(data) {
-      $scope.pics.ecs = data;
     }).
     error(function(data, status, headers, config) {
       $scope.pics.messagetitle = "Error";

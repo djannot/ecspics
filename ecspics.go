@@ -110,17 +110,11 @@ type ECS struct {
 }
 
 var hostname string
-var ecs ECS
 
 func main() {
   var port = ""
   // get all the environment data
   port = os.Getenv("PORT")
-  ecs = ECS{
-    Hostname: os.Getenv("HOSTNAME"),
-    EndPoint: os.Getenv("ENDPOINT"),
-    Namespace: os.Getenv("NAMESPACE"),
-  }
 
   hostname, _ = os.Hostname()
 
@@ -131,8 +125,7 @@ func main() {
   router := mux.NewRouter()
   router.HandleFunc("/", Index)
   router.Handle("/api/v1/buckets", appHandler(Buckets)).Methods("GET")
-  router.HandleFunc("/api/v1/ecs", Ecs).Methods("GET")
-  router.Handle("/api/v1/createbucket", appHandler(CreateBucket)).Methods("POST")
+    router.Handle("/api/v1/createbucket", appHandler(CreateBucket)).Methods("POST")
 	router.Handle("/api/v1/uploadpicture", appHandler(UploadPicture)).Methods("POST")
   router.Handle("/api/v1/search", appHandler(Search)).Methods("POST")
   router.HandleFunc("/login", Login)
@@ -157,75 +150,6 @@ type UserSecretKeyResult struct {
   SecretKey string `xml:"secret_key"`
 }
 
-// Validate credentials using the ECS self service API
-/*
-func Login(w http.ResponseWriter, r *http.Request) {
-  if r.Method == "POST" {
-    r.ParseForm()
-    user := r.FormValue("user")
-    password := r.FormValue("password")
-    tr := &http.Transport{
-      TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-    }
-    client := &http.Client{Transport: tr}
-    // Get token for the ECS management API using Active Directory credentials provided by the user
-    req, _ := http.NewRequest("GET", "https://" + ecs.Hostname + ":4443/login", nil)
-    req.SetBasicAuth(user, password)
-    resp, err := client.Do(req)
-    if err != nil{
-        log.Print(err)
-    }
-    if resp.StatusCode == 401 {
-      rendering.HTML(w, http.StatusOK, "login", "Check your crententials and that you're allowed to generate a secret key on ECS")
-    } else {
-      // Get the object user secret key if it already exists
-      req, _ = http.NewRequest("GET", "https://" + ecs.Hostname + ":4443/object/secret-keys", nil)
-      headers := map[string][]string{}
-      headers["X-Sds-Auth-Token"] = []string{resp.Header.Get("X-Sds-Auth-Token")}
-      req.Header = headers
-      resp, err = client.Do(req)
-      if err != nil{
-          log.Print(err)
-      }
-      buf := new(bytes.Buffer)
-      buf.ReadFrom(resp.Body)
-      secretKey := ""
-      userSecretKeysResult := &UserSecretKeysResult{}
-      xml.NewDecoder(buf).Decode(userSecretKeysResult)
-      secretKey = userSecretKeysResult.SecretKey1
-      if secretKey == "" {
-        // If the secret key doesn't exist yet for this user, create it
-        req, _ = http.NewRequest("POST", "https://" + ecs.Hostname + ":4443/object/secret-keys", bytes.NewBufferString("<secret_key_create_param></secret_key_create_param>"))
-        headers["Content-Type"] = []string{"application/xml"}
-        req.Header = headers
-        resp, err = client.Do(req)
-        if err != nil{
-            log.Print(err)
-        }
-        buf = new(bytes.Buffer)
-        buf.ReadFrom(resp.Body)
-        userSecretKeyResult := &UserSecretKeyResult{}
-        xml.NewDecoder(buf).Decode(userSecretKeyResult)
-        secretKey = userSecretKeyResult.SecretKey
-      }
-      session, err := store.Get(r, "session-name")
-      if err != nil {
-        rendering.HTML(w, http.StatusInternalServerError, "error", http.StatusInternalServerError)
-      }
-      session.Values["AccessKey"] = user
-      session.Values["SecretKey"] = secretKey
-      err = sessions.Save(r, w)
-      if err != nil {
-        rendering.HTML(w, http.StatusInternalServerError, "error", http.StatusInternalServerError)
-      }
-      http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-    }
-  } else {
-    rendering.HTML(w, http.StatusOK, "login", nil)
-  }
-}
-*/
-
 // Login using an AD or object user
 func Login(w http.ResponseWriter, r *http.Request) {
   // If informaton received from the form
@@ -239,6 +163,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
     user := r.FormValue("user")
     password := r.FormValue("password")
     endpoint := r.FormValue("endpoint")
+    namespace := r.FormValue("namespace")
     // For AD authentication, needs to retrieve the S3 secret key from ECS using the ECS management API
     if authentication == "ad" {
       url, err := url.Parse(endpoint)
@@ -296,6 +221,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
         session.Values["AccessKey"] = user
         session.Values["SecretKey"] = secretKey
         session.Values["Endpoint"] = endpoint
+        session.Values["Namespace"] = namespace
         err = sessions.Save(r, w)
         if err != nil {
           rendering.HTML(w, http.StatusInternalServerError, "error", http.StatusInternalServerError)
@@ -307,6 +233,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
       session.Values["AccessKey"] = user
       session.Values["SecretKey"] = password
       session.Values["Endpoint"] = endpoint
+      session.Values["Namespace"] = namespace
       err = sessions.Save(r, w)
       if err != nil {
         rendering.HTML(w, http.StatusInternalServerError, "error", http.StatusInternalServerError)
@@ -325,6 +252,8 @@ func Logout(w http.ResponseWriter, r *http.Request) {
   }
   delete(session.Values, "AccessKey")
   delete(session.Values, "SecretKey")
+  delete(session.Values, "Endpoint")
+  delete(session.Values, "Namespace")
   err = sessions.Save(r, w)
 
   http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
@@ -334,20 +263,16 @@ func Index(w http.ResponseWriter, r *http.Request) {
   rendering.HTML(w, http.StatusOK, "index", nil)
 }
 
-func Ecs(w http.ResponseWriter, r *http.Request) {
-  rendering.JSON(w, http.StatusOK, ecs)
-}
-
 func Buckets(w http.ResponseWriter, r *http.Request) *appError {
   session, err := store.Get(r, "session-name")
   if err != nil {
     return &appError{err: err, status: http.StatusInternalServerError, json: http.StatusText(http.StatusInternalServerError)}
   }
   s3 := S3{
-    EndPointString: ecs.EndPoint,
+    EndPointString: session.Values["Endpoint"].(string),
     AccessKey: session.Values["AccessKey"].(string),
     SecretKey: session.Values["SecretKey"].(string),
-    Namespace: ecs.Namespace,
+    Namespace: session.Values["Namespace"].(string),
   }
   response, _ := s3Request(s3, "", "GET", "/", make(map[string][]string), "")
   listBucketsResp := &ListBucketsResp{}
@@ -373,10 +298,10 @@ func CreateBucket(w http.ResponseWriter, r *http.Request) *appError {
     return &appError{err: err, status: http.StatusInternalServerError, json: http.StatusText(http.StatusInternalServerError)}
   }
   s3 := S3{
-    EndPointString: ecs.EndPoint,
+    EndPointString: session.Values["Endpoint"].(string),
     AccessKey: session.Values["AccessKey"].(string),
     SecretKey: session.Values["SecretKey"].(string),
-    Namespace: ecs.Namespace,
+    Namespace: session.Values["Namespace"].(string),
   }
 
   decoder := json.NewDecoder(r.Body)
@@ -440,10 +365,10 @@ func UploadPicture(w http.ResponseWriter, r *http.Request) *appError {
     return &appError{err: err, status: http.StatusInternalServerError, json: http.StatusText(http.StatusInternalServerError)}
   }
   s3 := S3{
-    EndPointString: ecs.EndPoint,
+    EndPointString: session.Values["Endpoint"].(string),
     AccessKey: session.Values["AccessKey"].(string),
     SecretKey: session.Values["SecretKey"].(string),
-    Namespace: ecs.Namespace,
+    Namespace: session.Values["Namespace"].(string),
   }
 
   decoder := json.NewDecoder(r.Body)
@@ -534,10 +459,10 @@ func Search(w http.ResponseWriter, r *http.Request) *appError {
     return &appError{err: err, status: http.StatusInternalServerError, json: http.StatusText(http.StatusInternalServerError)}
   }
   s3 := S3{
-    EndPointString: ecs.EndPoint,
+    EndPointString: session.Values["Endpoint"].(string),
     AccessKey: session.Values["AccessKey"].(string),
     SecretKey: session.Values["SecretKey"].(string),
-    Namespace: ecs.Namespace,
+    Namespace: session.Values["Namespace"].(string),
   }
   decoder := json.NewDecoder(r.Body)
   var query Query

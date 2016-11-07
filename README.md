@@ -29,17 +29,15 @@ BUILD
 
 The Dockerfile can be used to create a Docker container for this web application.
 
-Just run the following command in the folder that contains the Dockerfile: docker build -t ecspics . 
+Just run the following command in the folder that contains the Dockerfile: docker build -t ecspics .
 
 Please note that you have to correct the Namespace, EndPoint and Hostname either in the Dockerfile or when running the container.
 
 RUN
 --------------
 
-To start the application, run: 
-docker run -p 8080:80 -e "PORT=80 -e HOSTNAME=10.10.10.1 -e ENDPOINT=http://ecs-vip.local.net:9020 -e NAMESPACE=ns01 ecspics
-
-The parameters are the ECS Hostname or IP, the ECS Endpoint (or Loadbalancer) and the Namespace to use.
+To start the application, run:
+docker run -p 8080:80 -e PORT=80 ecspics
 
 The application will be available on http://\<ip of application host\>:8080
 
