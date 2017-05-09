@@ -2,7 +2,7 @@
   <dir-pagination-controls></dir-pagination-controls>
   <br />
   <!--<div id="pictures" class="col-md-3" ng-repeat="picture in pics.pictures">-->
-  <div id="pictures" class="col-md-3" dir-paginate="picture in pics.pictures | itemsPerPage: 10" current-page="currentPage">
+  <div id="pictures" class="col-xs-6 col-md-3" dir-paginate="picture in pics.pictures | itemsPerPage: 10" current-page="currentPage">
     <div class="thumbnail">
       <img ng-src="{{ picture['thumbnail_url'] }}" class="thumbnail" />
       <div class="caption">

@@ -433,6 +433,7 @@ if (!String.prototype.encodeHTML) {
       controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
         $scope.pics = picsService;
         this.displayBigMap = function() {
+          $("#bigmap").height($(window).height());
           var bigmapOptions = {
             zoom: 2,
             center: new google.maps.LatLng(35, -100),
@@ -453,6 +454,7 @@ if (!String.prototype.encodeHTML) {
           });
           $scope.pics.rectangle.setMap($scope.pics.bigmap);
           $scope.pics.rectangle.addListener('bounds_changed', this.updateRectanglePosition);
+          google.maps.event.trigger($scope.pics.bigmap, 'resize');
         };
         this.updateRectanglePosition = function(event) {
           var ne = $scope.pics.rectangle.getBounds().getNorthEast();
