@@ -433,7 +433,11 @@ if (!String.prototype.encodeHTML) {
       controller: ['$http', '$scope', 'picsService', function($http, $scope, picsService) {
         $scope.pics = picsService;
         this.displayBigMap = function() {
-          $("#bigmap").height($(window).height());
+          if($(window).height() > $(window).width()) {
+            $("#bigmap").height($(window).width());
+          } else {
+            $("#bigmap").height($(window).height() * 0.8);
+          }
           var bigmapOptions = {
             zoom: 2,
             center: new google.maps.LatLng(35, -100),
